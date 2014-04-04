@@ -10,7 +10,8 @@
 #define NTESTS 128
 #define S2P (1/20.0f)
 
-static int n0max = 0;
+#define THRESHOLD 25
+static int n0max = 5;
 
 /*
 	...
@@ -36,12 +37,12 @@ const char* windowname = "...";
 	-------------------------
 */
 
-	#define TDEPTH 10
+	#define TDEPTH 12
 
 	int32_t tree[1<<(TDEPTH+1)];
 
 	int templatecounts[1<<TDEPTH];
-	int32_t templatelut[1<<TDEPTH][256][1+NTESTS];
+	int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
 
 /*
 	portable time function
@@ -259,19 +260,13 @@ void process_image(IplImage* img, int draw, int print)
 	int MAXSIZE = 1000;
 
 	t = getticks();
-
-	for(i=0; i<1; ++i)
-	{
-		ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
-	}
-
+	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
 	t = getticks()-t;
 
 	//
 	if(draw)
 		for(i=0; i<ndetections; ++i)
 			draw_template_pattern(img, ptrs[i], rs[i], cs[i], ss[i], pixels, nrows, ncols, ldim);
-			//cvCircle(img, cvPoint(cs[i], rs[i]), ss[i]/2, CV_RGB(255, 0, 0), 4, 8, 0);
 
 	// if the flag is set, print the results to standard output
 	if(print)
@@ -329,9 +324,6 @@ void process_video_frames(char* path)
 		{
 			n0max += 1;
 
-			if(n0max > NTESTS)
-				n0max = NTESTS;
-
 			printf("---------------------- n0max = %d\n", n0max);
 		}
 		else if(key=='m')
@@ -350,8 +342,7 @@ void process_video_frames(char* path)
 				framecopy = cvCreateImage(cvSize(frame->width, frame->height), frame->depth, frame->nChannels);
 			cvCopy(frame, framecopy, 0);
 
-			// webcam outputs mirrored frames (at least on my machines); you can safely comment out this line if you find it unnecessary
-			cvFlip(framecopy, framecopy, 1);
+			///cvFlip(framecopy, framecopy, 1); // webcam outputs mirrored frames (at least on my machines); you can safely comment out this line if you find it unnecessary
 
 			//
 			process_image(framecopy, 1, 1);
@@ -375,6 +366,9 @@ int main(int argc, char* argv[])
 	if(argc >= 2)
 	{
 		FILE* file = fopen(argv[1], "rb");
+
+		if(!file)
+			return 0;
 
 		//
 		fread(&tree[0], sizeof(int32_t), 1, file);

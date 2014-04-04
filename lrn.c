@@ -147,7 +147,7 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 	
 */
 
-#define NTESTS 128
+#define NTESTS 96
 #define S2P (1/20.0f)
 
 int n0max = 5;
@@ -333,10 +333,10 @@ int32_t* grow_tree(int d, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 
 int32_t* tree = 0;
 
-#define TDEPTH 10
+#define TDEPTH 12
 
 int templatecounts[1<<TDEPTH];
-int32_t templatelut[1<<TDEPTH][256][1+NTESTS];
+int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
 
 void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int ntemplates, int tdepth)
 {
@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
 	float t;
 	int n, tdepth;
 
-	#define MAXN (1<<15)
+	#define MAXN (1<<16)
 
 	static uint8_t* pix[MAXN];
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN];
@@ -504,7 +504,7 @@ int main(int argc, char* argv[])
 	n = load_templates(argv[1], pix, rs, cs, ss, nrowss, ncolss, MAXN);
 
 	sscanf(argv[2], "%d", &tdepth);
-http://www.w3schools.com/tags/att_a_href.asp
+
 	//
 	t = getticks();
 	learn_templates(pix, rs, cs, ss, nrowss, ncolss, n, tdepth);
