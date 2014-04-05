@@ -62,8 +62,7 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 		for(j=c-s/2; j<c+s/2; ++j)
 			if(edgemap[i*ldim+j])
 			{
-				//if( (ers[en]-r)*(ers[en]-r) + (ecs[en]-c)*(ecs[en]-c) < s*s )
-				if(1)
+				if( (i-r)*(i-r) + (j-c)*(j-c) < s*s/4 )
 				{
 					ers[en] = i;
 					ecs[en] = j;
