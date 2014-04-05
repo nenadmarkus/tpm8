@@ -147,10 +147,10 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 	
 */
 
-#define NTESTS 96
+#define NTESTS (128)
 #define S2P (1/20.0f)
 
-int n0max = 5;
+int n0max = 2;
 
 #include "tm.c"
 
@@ -387,9 +387,9 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			edges->imageData = edgemap;
 			edges->widthStep = ncolss[n];
 
-			cvCanny(img, edges, 75, 125, 3);
+			cvCanny(img, edges, 150, 225, 3);
 
-			//cvShowImage("...", edges); cvWaitKey(0);
+			///cvShowImage("...", edges); cvWaitKey(0);
 
 			//
 			learn_template(templatelut[lutidx][templatecounts[lutidx]], NTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n]);
@@ -470,7 +470,7 @@ int load_templates(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], i
 
 			rs[n] = nrowss[n]/2;
 			cs[n] = ncolss[n]/2;
-			ss[n] = 2*MIN(nrowss[n], ncolss[n])/3;
+			ss[n] = MIN(nrowss[n], ncolss[n])/2;
 
 			///display_image(p, nrowss[n], ncolss[n], ncolss[n]); cvWaitKey(0);
 
@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
 	float t;
 	int n, tdepth;
 
-	#define MAXN (1<<16)
+	#define MAXN (1<<17)
 
 	static uint8_t* pix[MAXN];
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN];

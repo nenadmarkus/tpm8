@@ -62,10 +62,14 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 		for(j=c-s/2; j<c+s/2; ++j)
 			if(edgemap[i*ldim+j])
 			{
-				ers[en] = i;
-				ecs[en] = j;
+				//if( (ers[en]-r)*(ers[en]-r) + (ecs[en]-c)*(ecs[en]-c) < s*s )
+				if(1)
+				{
+					ers[en] = i;
+					ecs[en] = j;
 
-				++en;
+					++en;
+				}
 			}
 
 	//
@@ -185,7 +189,7 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 
 int match_template_at(int32_t template[], int r, int c, int s, int* pn1, int n0max, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
-	int i, n0;
+	int i, n0, r0;
 
 	int8_t* ptr;
 
@@ -195,6 +199,7 @@ int match_template_at(int32_t template[], int r, int c, int s, int* pn1, int n0m
 
 	//
 	n0 = 0;
+	r0 = 0;
 
 	ptr = (int8_t*)&template[1];
 
@@ -224,11 +229,18 @@ int match_template_at(int32_t template[], int r, int c, int s, int* pn1, int n0m
 		if( !bintest(template[i+1], r, c, s, pixels, nrows, ncols, ldim) )
 		{
 			++n0;
+			++r0;
 
 			//
 			if(n0 > n0max)
 				return 0;
+
+			//
+			if(r0 > 3)
+				return 0;
 		}
+		else
+			r0 = MAX(r0-1, 0);
 	}
 
 	//

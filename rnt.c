@@ -7,11 +7,10 @@
 	prameters ...
 */
 
-#define NTESTS 128
-#define S2P (1/20.0f)
+#define NTESTS (256)
 
 #define THRESHOLD 25
-static int n0max = 5;
+static int n0max = 15;
 
 /*
 	...
@@ -254,7 +253,7 @@ void process_image(IplImage* img, int draw, int print)
 
 	//
 	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.025f;
+	float STRIDEFACTOR = 0.02f;
 
 	int MINSIZE = 100;
 	int MAXSIZE = 1000;
@@ -266,7 +265,11 @@ void process_image(IplImage* img, int draw, int print)
 	//
 	if(draw)
 		for(i=0; i<ndetections; ++i)
+		{
 			draw_template_pattern(img, ptrs[i], rs[i], cs[i], ss[i], pixels, nrows, ncols, ldim);
+
+			cvCircle(img, cvPoint(cs[i], rs[i]), ss[i]/2, CV_RGB(255, 0, 0), 2, 8, 0);
+		}
 
 	// if the flag is set, print the results to standard output
 	if(print)

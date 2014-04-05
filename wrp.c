@@ -42,14 +42,14 @@ int saverid(const char* dst, uint8_t pixels[], int nrows, int ncols, int ldim)
 void warp_template(IplImage* in, int r, int c, int s, IplImage* out)
 {
 	//
-	float tr = s*(0.03f - 0.06f*rand()/(float)RAND_MAX);
-	float tc = s*(0.03f - 0.06f*rand()/(float)RAND_MAX);
+	float tr = s*(0.06f - 0.12f*rand()/(float)RAND_MAX);
+	float tc = s*(0.06f - 0.12f*rand()/(float)RAND_MAX);
 
 	float theta = 2*3.14159265*rand()/(float)RAND_MAX;
 	float phi = 2*3.14159265*rand()/(float)RAND_MAX;
 
-	float s1 = 0.9f + 0.2f*rand()/(float)RAND_MAX;
-	float s2 = 0.9f + 0.2f*rand()/(float)RAND_MAX;
+	float s1 = 0.85f + 0.3f*rand()/(float)RAND_MAX;
+	float s2 = 0.85f + 0.3f*rand()/(float)RAND_MAX;
 
 	CvMat cvmat0, cvmat1, cvmat2, cvmat3, cvmat4, cvmat5, H;
 
@@ -125,9 +125,9 @@ int generate_warps(IplImage* imgs[], int rs[], int cs[], int ss[], int nimgs, in
 		IplImage* template = 0;
 
 		//
-		template = cvCreateImage(cvSize(3*ss[i]/2, 3*ss[i]/2), IPL_DEPTH_8U, 1);
+		template = cvCreateImage(cvSize(2*ss[i], 2*ss[i]), IPL_DEPTH_8U, 1);
 
-		cvSetImageROI(imgs[i], cvRect(cs[i]-3*ss[i]/4, rs[i]-3*ss[i]/4, 3*ss[i]/2, 3*ss[i]/2));
+		cvSetImageROI(imgs[i], cvRect(cs[i]-ss[i], rs[i]-ss[i], 2*ss[i], 2*ss[i]));
 		cvCopy(imgs[i], template, 0);
 		cvResetImageROI(imgs[i]);
 
@@ -139,7 +139,7 @@ int generate_warps(IplImage* imgs[], int rs[], int cs[], int ss[], int nimgs, in
 			//
 			r = template->height/2;
 			c = template->width/2;
-			s = MIN(template->width, template->height);
+			s = ss[i];
 
 			//
 			warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
