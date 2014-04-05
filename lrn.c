@@ -4,20 +4,14 @@
 #include <highgui.h>
 
 /*
-	...
+	parameters ...
 */
 
-#ifndef MAX
-#define MAX(a, b) ((a)>(b)?(a):(b))
-#endif
+#define THRESHOLD 25
+#define NTESTS (128)
+#define S2P (1/20.0f)
 
-#ifndef MIN
-#define MIN(a, b) ((a)<(b)?(a):(b))
-#endif
-
-#ifndef ABS
-#define ABS(x) ((x)>0?(x):(-(x)))
-#endif
+int n0max = 2;
 
 /*
 	portable time function
@@ -144,17 +138,6 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 }
 
 /*
-	
-*/
-
-#define NTESTS (128)
-#define S2P (1/20.0f)
-
-int n0max = 2;
-
-#include "tm.c"
-
-/*
 	template clustering
 */
 
@@ -167,7 +150,7 @@ float get_test_quality(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss
 	n1 = 0;
 
 	for(i=0; i<n; ++i)
-		if( !bintest(tcode, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
+		if( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
 			++n0;
 		else
 			++n1;
@@ -192,7 +175,7 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	while(!stop)
 	{
 		//
-		while( !bintest(tcode, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
+		while( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
 		{
 			if( i==j )
 				break;
@@ -200,7 +183,7 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 				++i;
 		}
 
-		while( bintest(tcode, rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]) )
+		while( bintest(tcode, THRESHOLD, rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]) )
 		{
 			if( i==j )
 				break;
@@ -224,7 +207,7 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	n0 = 0;
 
 	for(i=0; i<n; ++i)
-		if( !bintest(tcode, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
+		if( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
 			++n0;
 
 	//
@@ -256,7 +239,7 @@ int grow_subtree(int32_t tcodes[], int nodeidx, int d, int maxd, int rs[], int c
 	}
 
 	//
-	nrands = 1024;
+	nrands = 128;
 
 	Q = 0;
 	tcodes[nodeidx] = mwcrand();
@@ -331,6 +314,8 @@ int32_t* grow_tree(int d, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	
 */
 
+#include "tm.c"
+
 int32_t* tree = 0;
 
 #define TDEPTH 12
@@ -353,7 +338,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		int i, lutidx, learnnew;
 
 		//
-		lutidx = get_tree_output(tree, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
+		lutidx = get_tree_output(tree, THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
 
 		//
 		learnnew = 1;
@@ -362,7 +347,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		{
 			int n1;
 
-			if( match_template_at(templatelut[lutidx][i], rs[n], cs[n], ss[n], &n1, n0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
+			if( match_template_at(templatelut[lutidx][i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
 			{
 				learnnew = 0;
 			}
@@ -392,7 +377,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			///cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templatelut[lutidx][templatecounts[lutidx]], NTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n]);
+			learn_template(templatelut[lutidx][templatecounts[lutidx]], NTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
 			++templatecounts[lutidx];
 

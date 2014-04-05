@@ -12,36 +12,14 @@
 #define THRESHOLD 25
 static int n0max = 15;
 
-/*
-	...
-*/
+// -----------------------
 
-#ifndef MAX
-#define MAX(a, b) ((a)>(b)?(a):(b))
-#endif
+#define TDEPTH 12
 
-#ifndef MIN
-#define MIN(a, b) ((a)<(b)?(a):(b))
-#endif
+int32_t tree[1<<(TDEPTH+1)];
 
-#ifndef ABS
-#define ABS(x) ((x)>0?(x):(-(x)))
-#endif
-
-const int KEY_SPACE = 32;
-
-const char* windowname = "...";
-
-/*
-	-------------------------
-*/
-
-	#define TDEPTH 12
-
-	int32_t tree[1<<(TDEPTH+1)];
-
-	int templatecounts[1<<TDEPTH];
-	int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
+int templatecounts[1<<TDEPTH];
+int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
 
 /*
 	portable time function
@@ -155,15 +133,16 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
-				lutidx = get_tree_output(tree, r, c, s, pixels, nrows, ncols, ldim);
-				//lutidx = 0;
+				lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
+
+				///printf("%d ", templatecounts[lutidx]);
 
 				//
 				for(i=0; i<templatecounts[lutidx]; ++i)
 				{
-					int32_t* template = &templatelut[lutidx][i][0];
+					int32_t* template = (int32_t*)&templatelut[lutidx][i][0];
 
-					pass = match_template_at(template, r, c, s, &n1, n0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(template, THRESHOLD, r, c, s, &n1, n0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
@@ -280,6 +259,8 @@ void process_image(IplImage* img, int draw, int print)
 
 void process_video_frames(char* path)
 {
+	const char* windowname = "rnt";
+
 	CvCapture* capture;
 
 	IplImage* frame;
