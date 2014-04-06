@@ -251,8 +251,8 @@ void process_image(IplImage* img, int draw, int print)
 	float SCALEFACTOR = 1.05f;
 	float STRIDEFACTOR = 0.02f;
 
-	int MINSIZE = 50;
-	int MAXSIZE = 200;
+	int MINSIZE = 100;
+	int MAXSIZE = 1000;
 
 	t = getticks();
 	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
@@ -406,7 +406,8 @@ int main(int argc, char* argv[])
 			cvShowImage("rnt", img);
 			cvWaitKey(0);
 		}
-		cvSaveImage(argv[3], img, 0);
+		else
+			cvSaveImage(argv[3], img, 0);
 
 		return 0;
 	}

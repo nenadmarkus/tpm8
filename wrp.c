@@ -36,20 +36,63 @@ int saverid(const char* dst, uint8_t pixels[], int nrows, int ncols, int ldim)
 }
 
 /*
+	PRNG
+*/
+
+uint32_t mwcrand_r(uint64_t* state)
+{
+	uint32_t* m;
+
+	//
+	m = (uint32_t*)state;
+
+	// bad state?
+	if(m[0] == 0)
+		m[0] = 0xAAAA;
+
+	if(m[1] == 0)
+		m[1] = 0xBBBB;
+
+	// mutate state
+	m[0] = 36969 * (m[0] & 65535) + (m[0] >> 16);
+	m[1] = 18000 * (m[1] & 65535) + (m[1] >> 16);
+
+	// output
+	return (m[0] << 16) + m[1];
+}
+
+uint64_t prngglobal = 0x12345678000fffffLL;
+
+void smwcrand(uint32_t seed)
+{
+	prngglobal = 0x12345678000fffffLL*seed;
+}
+
+uint32_t mwcrand()
+{
+	return mwcrand_r(&prngglobal);
+}
+
+float randuniform(float a, float b)
+{
+	return a + (b-a)*( mwcrand()%100000 )/99999.0f;
+}
+
+/*
 	
 */
 
-void warp_template(IplImage* in, int r, int c, int s, IplImage* out)
+void warp_template(IplImage* in, int r, int c, int s, float rotangle, IplImage* out)
 {
 	//
-	float tr = s*(0.06f - 0.12f*rand()/(float)RAND_MAX);
-	float tc = s*(0.06f - 0.12f*rand()/(float)RAND_MAX);
+	float tr = randuniform(-0.06f*s, +0.06f*s);
+	float tc = randuniform(-0.06f*s, +0.06f*s);
 
-	float theta = 2*3.14159265*rand()/(float)RAND_MAX;
-	float phi = 2*3.14159265*rand()/(float)RAND_MAX;
+	float theta = randuniform(-rotangle, +rotangle);
+	float phi = randuniform(-rotangle, +rotangle);
 
-	float s1 = 0.85f + 0.3f*rand()/(float)RAND_MAX;
-	float s2 = 0.85f + 0.3f*rand()/(float)RAND_MAX;
+	float s1 = randuniform(0.85f, 1.15f);
+	float s2 = randuniform(0.85f, 1.15f);
 
 	CvMat cvmat0, cvmat1, cvmat2, cvmat3, cvmat4, cvmat5, H;
 
@@ -113,52 +156,43 @@ void warp_template(IplImage* in, int r, int c, int s, IplImage* out)
 	cvWarpPerspective(in, out, &H, 0, cvScalarAll(0));
 }
 
-int generate_warps(IplImage* imgs[], int rs[], int cs[], int ss[], int nimgs, int nwarpsperimage, IplImage* warps[])
+int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* warps[])
 {
 	int i, j, n;
+
+	int tsize;
+	IplImage* template = 0;
 
 	//
 	n = 0;
 
-	for(i=0; i<nimgs; ++i)
+	//
+	tsize = 14*s/10;
+
+	template = cvCreateImage(cvSize(tsize, tsize), IPL_DEPTH_8U, 1);
+
+	cvSetImageROI(img, cvRect(c-tsize/2, r-tsize/2, tsize, tsize));
+	cvCopy(img, template, 0);
+	cvResetImageROI(img);
+
+	//
+	r = tsize/2;
+	c = tsize/2;
+
+	for(j=0; j<nwarps; ++j)
 	{
-		int s;
-		IplImage* template = 0;
+		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
+
+		warp_template(template, r, c, s, 3.14/6, warps[n]);
 
 		//
-		s = 14*ss[i]/10;
-
-		template = cvCreateImage(cvSize(s, s), IPL_DEPTH_8U, 1);
-
-		cvSetImageROI(imgs[i], cvRect(cs[i]-s/2, rs[i]-s/2, s, s));
-		cvCopy(imgs[i], template, 0);
-		cvResetImageROI(imgs[i]);
+		//cvShowImage("wrp", warps[n]); cvWaitKey(0);
 
 		//
-		for(j=0; j<nwarpsperimage; ++j)
-		{
-			int r, c, s;
-
-			//
-			r = template->height/2;
-			c = template->width/2;
-			s = ss[i];
-
-			//
-			warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
-
-			warp_template(template, r, c, s, warps[n]);
-
-			//
-			///cvShowImage("...", warps[n]); cvWaitKey(0);
-
-			//
-			++n;
-		}
-
-		//
-		cvReleaseImage(&template);
+		++n;
 	}
+
+	cvReleaseImage(&template);
 
 	//
 	return n;
@@ -206,6 +240,10 @@ void mouse_callback(int e, int x, int y, int flags, void* params)
 
 			//
 			cvCircle(tmpimg, cvPoint(x, y), 1, CV_RGB(255,0,0), 2, 8, 0);
+
+			//
+			_s = 75;
+			cvCircle(tmpimg, cvPoint(x, y), _s/2, CV_RGB(0,0,255), 2, 8, 0);
 
 			//
 			nclicks = 1;
@@ -270,7 +308,7 @@ int select_region(IplImage* frame, int* pr, int* pc, int* ps)
 
 	mouseeventprocessing = 0;
 
-	if(nclicks == 2)
+	if(nclicks)
 	{
 		*pr = _r;
 		*pc = _c;
@@ -284,7 +322,7 @@ int select_region(IplImage* frame, int* pr, int* pc, int* ps)
 	cvDestroyWindow(windowname);
 
 	//
-	return (nclicks==2);
+	return (nclicks==2) || (nclicks==1);
 }
 
 /*
@@ -455,7 +493,7 @@ int main(int argc, char* argv[])
 	//
 	warps = (IplImage**)malloc(nwarps*sizeof(IplImage*));
 
-	generate_warps(&gray, &r, &c, &s, 1, nwarps, warps);
+	generate_warps(gray, r, c, s, nwarps, warps);
 
 	//
 	for(i=0; i<nwarps; ++i)
