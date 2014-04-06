@@ -49,7 +49,7 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 		for(j=c-s/2; j<c+s/2; ++j)
 			if(edgemap[i*ldim+j])
 			{
-				if( (i-r)*(i-r) + (j-c)*(j-c) < s*s/4 )
+				if( (i-r)*(i-r) + (j-c)*(j-c) < (s-2)*(s-2)/4 )
 				{
 					ers[en] = i;
 					ecs[en] = j;
@@ -191,27 +191,6 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 
 	for(i=0; i<template[0]; ++i)
 	{
-		/*
-		int r1, c1, r2, c2;
-
-		//
-		r1 = (NORMALIZATION*r + ptr[4*i+0]*s)/NORMALIZATION;
-		c1 = (NORMALIZATION*c + ptr[4*i+1]*s)/NORMALIZATION;
-
-		r2 = (NORMALIZATION*r + ptr[4*i+2]*s)/NORMALIZATION;
-		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
-
-		//
-		if( ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) <= THRESHOLD )
-		{
-			++n0;
-
-			//
-			if(n0 > n0max)
-				return 0;
-		}
-		*/
-
 		if( !bintest(template[i+1], threshold, r, c, s, pixels, nrows, ncols, ldim) )
 		{
 			++n0;
@@ -234,27 +213,4 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 
 	//
 	return 1;
-}
-
-int get_tree_output(int32_t tree[], int threshold, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
-{
-	int d, tdepth, idx;
-	int32_t* tcodes;
-
-	//
-	tdepth = tree[0];
-	tcodes = &tree[1];
-
-	idx = 0;
-
-	for(d=0; d<tdepth; ++d)
-	{
-		if( bintest(tcodes[idx], threshold, r, c, s, pixels, nrows, ncols, ldim) )
-			idx = 2*idx + 2;
-		else
-			idx = 2*idx + 1;
-	}
-
-	//
-	return idx - ((1<<tdepth)-1);
 }

@@ -106,7 +106,9 @@ uint32_t mwcrand()
 	
 */
 
-#include "tm.c"
+#include "tme.c"
+#include "cng.c"
+#include "ahe.c"
 
 int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetections,
 					uint8_t pixels[], int nrows, int ncols, int ldim,
@@ -210,8 +212,6 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 /*
 	
 */
-
-#include "clahe.c"
 
 void process_image(IplImage* img, int draw, int print)
 {
