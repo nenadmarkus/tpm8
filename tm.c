@@ -143,7 +143,7 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 						++nok;
 				}
 
-				if(nok/32.0f < 0.9f)
+				if(nok/32.0f < 0.95f)
 					ok = 0;
 
 				//

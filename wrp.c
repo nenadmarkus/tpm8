@@ -122,12 +122,15 @@ int generate_warps(IplImage* imgs[], int rs[], int cs[], int ss[], int nimgs, in
 
 	for(i=0; i<nimgs; ++i)
 	{
+		int s;
 		IplImage* template = 0;
 
 		//
-		template = cvCreateImage(cvSize(2*ss[i], 2*ss[i]), IPL_DEPTH_8U, 1);
+		s = 14*ss[i]/10;
 
-		cvSetImageROI(imgs[i], cvRect(cs[i]-ss[i], rs[i]-ss[i], 2*ss[i], 2*ss[i]));
+		template = cvCreateImage(cvSize(s, s), IPL_DEPTH_8U, 1);
+
+		cvSetImageROI(imgs[i], cvRect(cs[i]-s/2, rs[i]-s/2, s, s));
 		cvCopy(imgs[i], template, 0);
 		cvResetImageROI(imgs[i]);
 

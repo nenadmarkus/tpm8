@@ -7,9 +7,11 @@
 	prameters ...
 */
 
+#define USECLAHE
+
 #define NTESTS (256)
 
-#define THRESHOLD 25
+#define THRESHOLD 50
 static int n0max = 15;
 
 // -----------------------
@@ -189,16 +191,27 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
 
 		//
+		//*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);
 		else
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(255, 0, 0), 2, 8, 0);
+		//*/
+
+		/*
+		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
+			cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(0, 255, 0), 0, 8, 0);
+		else
+			cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(255, 0, 0), 0, 8, 0);
+		//*/
 	}
 }
 
 /*
 	
 */
+
+#include "clahe.c"
 
 void process_image(IplImage* img, int draw, int print)
 {
@@ -230,12 +243,16 @@ void process_image(IplImage* img, int draw, int print)
 	ncols = gray->width;
 	ldim = gray->widthStep;
 
+#ifdef USECLAHE
+	CLAHE(pixels, pixels, nrows, ncols, ldim, 8, 8, 3);
+#endif
+
 	//
 	float SCALEFACTOR = 1.05f;
 	float STRIDEFACTOR = 0.02f;
 
-	int MINSIZE = 100;
-	int MAXSIZE = 1000;
+	int MINSIZE = 50;
+	int MAXSIZE = 200;
 
 	t = getticks();
 	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
@@ -378,14 +395,18 @@ int main(int argc, char* argv[])
 	printf("tree depth = %d\n", tree[0]); j=0; for(i=0; i<(1<<tree[0]); ++i) j+=templatecounts[i]; printf("template count = %d\n", j);
 
 	//
-	if(argc==3)
+	if(argc==3 || argc==4)
 	{
 		IplImage* img = cvLoadImage(argv[2], CV_LOAD_IMAGE_COLOR);
 
 		process_image(img, 1, 1);
 
-		cvShowImage("...", img);
-		cvWaitKey(0);
+		if(argc==3)
+		{
+			cvShowImage("rnt", img);
+			cvWaitKey(0);
+		}
+		cvSaveImage(argv[3], img, 0);
 
 		return 0;
 	}

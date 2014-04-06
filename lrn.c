@@ -7,11 +7,11 @@
 	parameters ...
 */
 
-#define THRESHOLD 25
+#define THRESHOLD 50
 #define NTESTS (128)
 #define S2P (1/20.0f)
 
-int n0max = 2;
+int n0max = 5;
 
 /*
 	portable time function
@@ -327,10 +327,18 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 {
 	int n;
 
-	//
-	tree = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, ntemplates);
+	float t;
 
 	//
+	t = getticks();
+
+	tree = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, ntemplates);
+
+	printf("%d regions clustered in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
+
+	//
+	t = getticks();
+
 	for(n=0; n<(1<<tdepth); ++n) templatecounts[n] = 0;
 
 	for(n=0; n<ntemplates; ++n)
@@ -390,6 +398,8 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 		///printf("%d\n", n);
 	}
+
+	printf("templates learned in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
 }
 
 /*
@@ -455,7 +465,7 @@ int load_templates(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], i
 
 			rs[n] = nrowss[n]/2;
 			cs[n] = ncolss[n]/2;
-			ss[n] = MIN(nrowss[n], ncolss[n])/2;
+			ss[n] = 10*MIN(nrowss[n], ncolss[n])/14;
 
 			///display_image(p, nrowss[n], ncolss[n], ncolss[n]); cvWaitKey(0);
 
