@@ -322,6 +322,9 @@ int main(int argc, char* argv[])
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN];
 
 	//
+	smwcrand(time(0));
+
+	//
 	if(argc != 4)
 		return 0;
 
