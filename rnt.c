@@ -106,6 +106,7 @@ uint32_t mwcrand()
 	
 */
 
+#include "bnt.c"
 #include "tme.c"
 #include "cng.c"
 #include "ahe.c"

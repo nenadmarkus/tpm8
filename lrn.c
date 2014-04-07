@@ -141,6 +141,7 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 	
 */
 
+#include "bnt.c"
 #include "tme.c"
 #include "cng.c"
 
