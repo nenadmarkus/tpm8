@@ -138,6 +138,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
+				///for(i=0; i<0; ++i)
 				lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
 
 				///printf("%d ", templatecounts[lutidx]);
@@ -250,10 +251,10 @@ void process_image(IplImage* img, int draw, int print)
 
 	//
 	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.02f;
+	float STRIDEFACTOR = 0.01f;
 
-	int MINSIZE = 100;
-	int MAXSIZE = 1000;
+	int MINSIZE = 85;
+	int MAXSIZE = 115;
 
 	t = getticks();
 	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);

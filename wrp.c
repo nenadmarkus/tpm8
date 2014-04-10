@@ -153,7 +153,7 @@ void warp_template(IplImage* in, int r, int c, int s, float rotangle, IplImage* 
 	//
 	cvZero(out);
 
-	cvWarpPerspective(in, out, &H, 0, cvScalarAll(0));
+	cvWarpPerspective(in, out, &H, CV_INTER_LINEAR, cvScalarAll(0));
 }
 
 int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* warps[])
@@ -167,13 +167,15 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	n = 0;
 
 	//
-	tsize = 14*s/10;
+	tsize = 3*s/2;
 
 	template = cvCreateImage(cvSize(tsize, tsize), IPL_DEPTH_8U, 1);
 
-	cvSetImageROI(img, cvRect(c-tsize/2, r-tsize/2, tsize, tsize));
-	cvCopy(img, template, 0);
-	cvResetImageROI(img);
+	///cvSetImageROI(img, cvRect(c-tsize/2, r-tsize/2, tsize, tsize));
+	///cvCopy(img, template, 0);
+	///cvResetImageROI(img);
+
+	cvGetRectSubPix(img, template, cvPoint2D32f(c, r));
 
 	//
 	r = tsize/2;
@@ -183,7 +185,7 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		warp_template(template, r, c, s, 3.14/6, warps[n]);
+		warp_template(template, r, c, s, 2*3.14, warps[n]);
 
 		//
 		//cvShowImage("wrp", warps[n]); cvWaitKey(0);
@@ -382,7 +384,7 @@ int process_webcam_frames(IplImage** pimg, int* pr, int* pc, int* ps)
 			cvCopy(frame, framecopy, 0);
 
 			// webcam outputs mirrored frames (at least on my machines); you can safely comment out this line if you find it unnecessary
-			cvFlip(framecopy, framecopy, 1);
+			///cvFlip(framecopy, framecopy, 1);
 
 			//
 			if(key == KEY_SPACE)

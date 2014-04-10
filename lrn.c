@@ -294,7 +294,7 @@ int load_templates(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], i
 
 			rs[n] = nrowss[n]/2;
 			cs[n] = ncolss[n]/2;
-			ss[n] = 10*MIN(nrowss[n], ncolss[n])/14;
+			ss[n] = 2*MIN(nrowss[n], ncolss[n])/3;
 
 			///display_image(p, nrowss[n], ncolss[n], ncolss[n]); cvWaitKey(0);
 
