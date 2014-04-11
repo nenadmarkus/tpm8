@@ -82,14 +82,14 @@ float randuniform(float a, float b)
 	
 */
 
-void warp_template(IplImage* in, int r, int c, int s, float rotangle, IplImage* out)
+void warp_template(IplImage* in, int r, int c, int s, float maxrotangle, IplImage* out)
 {
 	//
 	float tr = randuniform(-0.06f*s, +0.06f*s);
 	float tc = randuniform(-0.06f*s, +0.06f*s);
 
-	float theta = randuniform(-rotangle, +rotangle);
-	float phi = randuniform(-rotangle, +rotangle);
+	float theta = randuniform(-maxrotangle, +maxrotangle);
+	float phi = randuniform(-maxrotangle, +maxrotangle);
 
 	float s1 = randuniform(0.85f, 1.15f);
 	float s2 = randuniform(0.85f, 1.15f);
@@ -185,7 +185,7 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		warp_template(template, r, c, s, 2*3.14, warps[n]);
+		warp_template(template, r, c, s, 3.14156, warps[n]);
 
 		//
 		//cvShowImage("wrp", warps[n]); cvWaitKey(0);
@@ -436,19 +436,18 @@ int main(int argc, char* argv[])
 	//
 	if(argc == 8)
 	{
-
 		//
 		rgb = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR);
 		gray = cvLoadImage(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
-	
+
 		if(!gray || !rgb)
 			return 0;
-	
+
 		sscanf(argv[2], "%d", &r);
 		sscanf(argv[3], "%d", &c);
 		sscanf(argv[4], "%d", &s);
 		sscanf(argv[5], "%d", &nwarps);
-	
+
 		sscanf(argv[6], "%s", tag);
 		sscanf(argv[7], "%s", folder);
 	}

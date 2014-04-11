@@ -251,7 +251,7 @@ void process_image(IplImage* img, int draw, int print)
 
 	//
 	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.01f;
+	float STRIDEFACTOR = 0.02f;
 
 	int MINSIZE = 85;
 	int MAXSIZE = 115;
