@@ -7,12 +7,14 @@
 	prameters ...
 */
 
-#define USECLAHE
+#define USE_CLAHE
 
 #define NTESTS (256)
 
-#define THRESHOLD 50
-static int n0max = 15;
+#define THRESHOLD 25
+
+int n0max = 3;
+int r0max = 3;
 
 // -----------------------
 
@@ -106,6 +108,8 @@ uint32_t mwcrand()
 	
 */
 
+#define USE_RGB
+
 #include "bnt.c"
 #include "tme.c"
 #include "cng.c"
@@ -113,7 +117,7 @@ uint32_t mwcrand()
 
 int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetections,
 					uint8_t pixels[], int nrows, int ncols, int ldim,
-					float scalefactor, float stridefactor, float minsize, float maxsize, int n0max)
+					float scalefactor, float stridefactor, float minsize, float maxsize, int n0max, int r0max)
 {
 	int s;
 	int ndetections;
@@ -138,17 +142,14 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
-				///for(i=0; i<0; ++i)
 				lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
-
-				///printf("%d ", templatecounts[lutidx]);
 
 				//
 				for(i=0; i<templatecounts[lutidx]; ++i)
 				{
 					int32_t* template = (int32_t*)&templatelut[lutidx][i][0];
 
-					pass = match_template_at(template, THRESHOLD, r, c, s, &n1, n0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(template, THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
@@ -195,14 +196,14 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
 
 		//
-		//*
+		/*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);
 		else
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(255, 0, 0), 2, 8, 0);
 		//*/
 
-		/*
+		//*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
 			cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(0, 255, 0), 0, 8, 0);
 		else
@@ -222,7 +223,7 @@ void process_image(IplImage* img, int draw, int print)
 	uint8_t* pixels;
 	int nrows, ncols, ldim;
 
-	static IplImage* gray = 0;
+	static IplImage* toprocess = 0;
 
 	#define MAXNDETECTIONS 8192
 	int ndetections;
@@ -231,33 +232,39 @@ void process_image(IplImage* img, int draw, int print)
 
 	float t;
 
+#ifndef USE_RGB
 	// grayscale image
-	if(!gray)
-		gray = cvCreateImage(cvSize(img->width, img->height), img->depth, 1);
+	if(!toprocess)
+		toprocess = cvCreateImage(cvSize(img->width, img->height), img->depth, 1);
 	if(img->nChannels == 3)
-		cvCvtColor(img, gray, CV_RGB2GRAY);
+		cvCvtColor(img, toprocess, CV_RGB2GRAY);
 	else
-		cvCopy(img, gray, 0);
+		cvCopy(img, toprocess, 0);
+#else
+	toprocess = img;
+#endif
 
 	// get relevant image data
-	pixels = (uint8_t*)gray->imageData;
-	nrows = gray->height;
-	ncols = gray->width;
-	ldim = gray->widthStep;
+	pixels = (uint8_t*)toprocess->imageData;
+	nrows = toprocess->height;
+	ncols = toprocess->width;
+	ldim = toprocess->widthStep;
 
-#ifdef USECLAHE
+#ifndef USE_RGB
+#ifdef USE_CLAHE
 	CLAHE(pixels, pixels, nrows, ncols, ldim, 8, 8, 3);
+#endif
 #endif
 
 	//
 	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.02f;
+	float STRIDEFACTOR = 0.04f;
 
-	int MINSIZE = 85;
-	int MAXSIZE = 115;
+	int MINSIZE = 70;
+	int MAXSIZE = 120;
 
 	t = getticks();
-	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
+	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
 	t = getticks()-t;
 
 	//

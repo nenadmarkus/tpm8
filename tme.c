@@ -145,7 +145,7 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 	return n;
 }
 
-int match_template_at(int32_t template[], int threshold, int r, int c, int s, int* pn1, int n0max, uint8_t pixels[], int nrows, int ncols, int ldim)
+int match_template_at(int32_t template[], int threshold, int r, int c, int s, int* pn1, int n0max, int r0max, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
 	int i, n0, r0;
 
@@ -173,7 +173,7 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 				return 0;
 
 			//
-			if(r0 > 3)
+			if(r0 > r0max)
 				return 0;
 		}
 		else

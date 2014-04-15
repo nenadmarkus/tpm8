@@ -7,11 +7,12 @@
 	parameters ...
 */
 
-#define THRESHOLD 50
+#define THRESHOLD 25
 #define NTESTS (128)
 #define S2P (1/20.0f)
 
-int n0max = 5;
+int n0max = 15;
+int r0max = 3;
 
 /*
 	portable time function
@@ -184,7 +185,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		{
 			int n1;
 
-			if( match_template_at(templatelut[lutidx][i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
+			if( match_template_at(templatelut[lutidx][i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, r0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
 			{
 				learnnew = 0;
 			}
@@ -211,7 +212,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 			cvCanny(img, edges, 150, 225, 3);
 
-			///cvShowImage("...", edges); cvWaitKey(0);
+			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
 			learn_template(templatelut[lutidx][templatecounts[lutidx]], NTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
