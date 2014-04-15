@@ -9,7 +9,7 @@
 
 #define USE_CLAHE
 
-#define NTESTS (256)
+#define NTESTS (512)
 
 #define THRESHOLD 25
 
