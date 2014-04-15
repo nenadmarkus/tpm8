@@ -196,14 +196,14 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
 
 		//
-		/*
+		//*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);
 		else
 			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(255, 0, 0), 2, 8, 0);
 		//*/
 
-		//*
+		/*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
 			cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(0, 255, 0), 0, 8, 0);
 		else

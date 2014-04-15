@@ -282,7 +282,7 @@ int load_templates(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], i
 	//
 	n = 0;
 
-	while( fscanf(list, "%s", name) == 1 )
+	while( fscanf(list, "%s", name)==1  && n<maxn )
 	{
 		uint8_t* p = 0;
 
@@ -330,6 +330,8 @@ int main(int argc, char* argv[])
 		return 0;
 
 	n = load_templates(argv[1], pix, rs, cs, ss, nrowss, ncolss, MAXN);
+
+	printf("loaded %d image templates ...\n", n);
 
 	sscanf(argv[2], "%d", &tdepth);
 
