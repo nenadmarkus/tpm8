@@ -212,6 +212,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		//
 		learnnew = 1;
 
+		/*
 		for(i=0; i<numtemplates; ++i)
 		{
 			int n1;
@@ -221,6 +222,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 				learnnew = 0;
 			}
 		}
+		*/
 
 		if(learnnew && numtemplates < MAXNUMTEMPLATES)
 		{
@@ -247,13 +249,14 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			i = learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
 			//draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); cvWaitKey(0);
 
-			++numtemplates;
+			if(i)
+				++numtemplates;
 
 			//
 			free(edgemap);

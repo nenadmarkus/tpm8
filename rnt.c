@@ -11,7 +11,7 @@
 
 #define MAXNUMTESTS (512)
 
-#define THRESHOLD 25
+#define THRESHOLD 20
 
 int n0max = 0;
 int r0max = 3;
@@ -266,7 +266,7 @@ void process_image(IplImage* img, int draw, int print)
 
 	//
 	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.04f;
+	float STRIDEFACTOR = 0.05f;
 
 	int MINSIZE = 70;
 	int MAXSIZE = 120;
