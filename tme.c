@@ -71,18 +71,11 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 			//
 			int r1, c1, r2, c2;
 
-			r1 = ers[e] - sin(o)*p;
-			c1 = ecs[e] - cos(o)*p;
+			r1 = MIN(MAX(r-s/2+1, ers[e]-sin(o)*p), r+s/2-1);
+			c1 = MIN(MAX(c-s/2+1, ecs[e]-cos(o)*p), c+s/2-1);
 
-			r2 = ers[e] + sin(o)*p;
-			c2 = ecs[e] + cos(o)*p;
-
-			//
-			r1 = MIN(MAX(r-s/2+1, r1), r+s/2-1);
-			c1 = MIN(MAX(c-s/2+1, c1), c+s/2-1);
-
-			r2 = MIN(MAX(r-s/2+1, r2), r+s/2-1);
-			c2 = MIN(MAX(c-s/2+1, c2), c+s/2-1);
+			r2 = MIN(MAX(r-s/2+1, ers[e]+sin(o)*p), r+s/2-1);
+			c2 = MIN(MAX(c-s/2+1, ecs[e]+cos(o)*p), c+s/2-1);
 
 			//
 			ptr[4*n+0] = NORMALIZATION*(r1-r)/s;
@@ -91,38 +84,37 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 			ptr[4*n+3] = NORMALIZATION*(c2-c)/s;
 
 			b = *(int32_t*)&ptr[4*n+0];
+			b = b | 0x1;
+			*(int32_t*)&ptr[4*n+0] = b;
 
 			//
-			if( bintest(b, threshold, r, c, s, pixels, nrows, ncols, ldim) )
+			int ok;
+
+			//
+			ok = 1;
+
+			// proximity requirements
+			for(i=0; i<n; ++i)
 			{
-				int ok;
+				int d2 = (ers[elist[i]]-ers[e])*(ers[elist[i]]-ers[e]) + (ecs[elist[i]]-ecs[e])*(ecs[elist[i]]-ecs[e]);
+
+				if(d2 < (maxnumiters-numiters)*s/maxnumiters)
+					ok = 0;
+			}
+
+			// stability requirements
+			for(i=0; i<32; ++i)
+				if( !bintest(b, threshold, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s, pixels, nrows, ncols, ldim) )
+					ok = 0;
+
+			//
+			if(ok)
+			{
+				//
+				elist[n] = e;
 
 				//
-				ok = 1;
-
-				// proximity requirements
-				for(i=0; i<n; ++i)
-				{
-					int d2 = (ers[elist[i]]-ers[e])*(ers[elist[i]]-ers[e]) + (ecs[elist[i]]-ecs[e])*(ecs[elist[i]]-ecs[e]);
-
-					if(d2 < (maxnumiters-numiters)*s/maxnumiters)
-						ok = 0;
-				}
-
-				// stability requirements
-				for(i=0; i<32; ++i)
-					if( !bintest(b, threshold, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s, pixels, nrows, ncols, ldim) )
-						ok = 0;
-
-				//
-				if(ok)
-				{
-					//
-					elist[n] = e;
-
-					//
-					++n;
-				}
+				++n;
 			}
 
 			//
