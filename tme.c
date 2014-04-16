@@ -9,20 +9,23 @@
 #define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file));
 #define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), fread(&(t)[1], sizeof(int32_t), (t)[0], (file));
 
-int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t edgemap[], int nrows, int ncols, int ldim, int threshold)
+int learn_template(int32_t template[], int maxnumtests, int type, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t mask[], int nrows, int ncols, int ldim, int threshold)
 {
-	int i, j;
+	int i, j, n, numiters, maxnumiters, p;
 
 	int8_t* ptr;
+	int32_t b;
 
-	int ers[8192], ecs[8192], en;
+	static int ers[400*400], ecs[400*400], en;
+
+	int r1, c1, r2, c2;
 
 	//
 	en = 0;
 
 	for(i=r-s/2; i<r+s/2; ++i)
 		for(j=c-s/2; j<c+s/2; ++j)
-			if(edgemap[i*ldim+j])
+			if(mask[i*ldim+j])
 			{
 				if( (i-r)*(i-r) + (j-c)*(j-c) < (s-2)*(s-2)/4 )
 				{
@@ -33,19 +36,22 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 				}
 			}
 
+	if(!en)
+	{
+		template[0] = 0;
+		return 0;
+	}
+
 	//
-	int n, numiters, maxnumiters;
-
-	maxnumiters = 16*maxnumtests;
-
 	n = 0;
-	numiters = 0;
-
 	ptr = (int8_t*)&template[1];
 
-	if(en)
+	if(type == 1)
 	{
-		int p = (int)( s*s2p );
+		p = (int)( s*s2p );
+		maxnumiters = 16*maxnumtests;
+
+		numiters = 0;
 
 		while(n<maxnumtests && numiters<maxnumiters)
 		{
@@ -53,8 +59,6 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 
 			int e;
 			int elist[1024];
-
-			int32_t b;
 
 			//
 			e = mwcrand()%en;
@@ -69,8 +73,6 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 				o = atan( gr/gc );
 
 			//
-			int r1, c1, r2, c2;
-
 			r1 = MIN(MAX(r-s/2+1, ers[e]-sin(o)*p), r+s/2-1);
 			c1 = MIN(MAX(c-s/2+1, ecs[e]-cos(o)*p), c+s/2-1);
 
@@ -84,27 +86,25 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 			ptr[4*n+3] = NORMALIZATION*(c2-c)/s;
 
 			b = *(int32_t*)&ptr[4*n+0];
-			b = b | 0x1;
-			*(int32_t*)&ptr[4*n+0] = b;
 
 			//
-			int ok;
+			int ok = 1;
 
-			//
-			ok = 1;
-
-			// proximity requirements
 			for(i=0; i<n; ++i)
 			{
+				/*
+					proximity requirements
+				*/
 				int d2 = (ers[elist[i]]-ers[e])*(ers[elist[i]]-ers[e]) + (ecs[elist[i]]-ecs[e])*(ecs[elist[i]]-ecs[e]);
-
 				if(d2 < (maxnumiters-numiters)*s/maxnumiters)
 					ok = 0;
 			}
 
-			// stability requirements
 			for(i=0; i<32; ++i)
-				if( !bintest(b, threshold, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s, pixels, nrows, ncols, ldim) )
+				/*
+					stability requirements
+				*/
+				if( 0==bintest(b, threshold, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s, pixels, nrows, ncols, ldim) )
 					ok = 0;
 
 			//
@@ -121,7 +121,54 @@ int learn_template(int32_t template[], int maxnumtests, float s2p, int r, int c,
 			++numiters;
 		}
 	}
+	else
+	{
+		p = (int)( s*s2p );
+		maxnumiters = 64*maxnumtests;
 
+		numiters = 0;
+
+		while(n<maxnumtests && numiters<maxnumiters)
+		{
+			//
+			r1 = r - s/2 + mwcrand()%s;
+			c1 = c - s/2 + mwcrand()%s;
+
+			r2 = r - s/2 + mwcrand()%s;
+			c2 = c - s/2 + mwcrand()%s;
+
+			if(mask[r1*ldim+c1]==0 || mask[r2*ldim+c2]==0)
+				continue;
+
+			if( (r1-r2)*(r1-r2)+(c1-c2)*(c1-c2)>s*s/100 || (r1-r2)*(r1-r2)+(c1-c2)*(c1-c2)<s*s/225 )
+				continue;
+
+			//
+			ptr[4*n+0] = NORMALIZATION*(r1-r)/s;
+			ptr[4*n+1] = NORMALIZATION*(c1-c)/s;
+			ptr[4*n+2] = NORMALIZATION*(r2-r)/s;
+			ptr[4*n+3] = NORMALIZATION*(c2-c)/s;
+
+			b = *(int32_t*)&ptr[4*n+0];
+
+			//
+			int ok = 1;
+
+			for(i=0; i<32; ++i)
+				if( 1==bintest(b, threshold, r-p+mwcrand()%(2*p), c-p+mwcrand()%(2*p), s, pixels, nrows, ncols, ldim) )
+					ok = 0;
+
+			if(ok)
+			{
+				++n;
+			}
+
+			//
+			++numiters;
+		}
+	}
+
+	//
 	template[0] = n;
 
 	//

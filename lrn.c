@@ -146,6 +146,35 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 #include "tme.c"
 #include "cng.c"
 
+void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
+{
+	int i;
+
+	int8_t* ptr;
+
+	//
+	ptr = (int8_t*)&template[1];
+
+	for(i=0; i<template[0]; ++i)
+	{
+		int r1, c1, r2, c2, t;
+
+		//
+		r1 = (NORMALIZATION*r + ptr[4*i+0]*s)/NORMALIZATION;
+		c1 = (NORMALIZATION*c + ptr[4*i+1]*s)/NORMALIZATION;
+
+		r2 = (NORMALIZATION*r + ptr[4*i+2]*s)/NORMALIZATION;
+		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
+
+		//
+		cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(255, 255, 255), 0, 8, 0);
+	}
+}
+
+/*
+	
+*/
+
 #define MAXNUMTREES 16
 int numtrees = 0;
 int32_t* trees[MAXNUMTREES];
@@ -154,6 +183,7 @@ int32_t* tluts[MAXNUMTREES];
 #define MAXNUMTEMPLATES 8192
 int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
+int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
 void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples, int tdepth)
 {
@@ -192,7 +222,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			}
 		}
 
-		if(learnnew)
+		if(learnnew && numtemplates < MAXNUMTEMPLATES)
 		{
 			IplImage* edges;
 			IplImage* img;
@@ -204,19 +234,24 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 			//
 			img = cvCreateImageHeader(cvSize(ncolss[n], nrowss[n]), IPL_DEPTH_8U, 1);
-			img->imageData = pix[n];
+			img->imageData = (char*)pix[n];
 			img->widthStep = ncolss[n];
 
 			edges = cvCreateImageHeader(cvSize(ncolss[n], nrowss[n]), IPL_DEPTH_8U, 1);
-			edges->imageData = edgemap;
+			edges->imageData = (char*)edgemap;
 			edges->widthStep = ncolss[n];
 
+			//
 			cvCanny(img, edges, 150, 225, 3);
 
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templates[numtemplates], MAXNUMTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+
+			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+
+			//draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); cvWaitKey(0);
 
 			++numtemplates;
 
@@ -226,8 +261,6 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			cvReleaseImageHeader(&edges);
 			cvReleaseImageHeader(&img);
 		}
-
-		///printf("%d\n", n);
 	}
 
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
@@ -356,7 +389,10 @@ int main(int argc, char* argv[])
 		fwrite(&numtemplates, sizeof(int), 1, file);
 
 		for(i=0; i<numtemplates; ++i)
+		{
 			SAVE_TEMPLATE(templates[i], file);
+			SAVE_TEMPLATE(smoothnesstemplates[i], file);
+		}
 
 		///fwrite(tree, sizeof(int32_t), 1<<(tree[0]+1), file);
 		///for(i=0; i<(1<<tree[0]); ++i) printf("%d ", templatecounts[i]); printf("%d\n");

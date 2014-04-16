@@ -2,6 +2,8 @@
 #
 #
 
+CC = clang
+
 OPENCV = -I/usr/include/opencv -lopencv_highgui -lopencv_core -lopencv_imgproc
 
 #

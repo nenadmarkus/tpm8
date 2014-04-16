@@ -26,6 +26,7 @@ int32_t* tluts[MAXNUMTREES];
 #define MAXNUMTEMPLATES 8192
 int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
+int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
 /*
 	portable time function
@@ -155,6 +156,16 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 
 					if(pass)
 					{
+						int _n1;
+
+						match_template_at(&smoothnesstemplates[i][0], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+
+						if(_n1 > smoothnesstemplates[i][0]/2)
+							pass = 0;
+					}
+
+					if(pass)
+					{
 						if(ndetections < maxndetections)
 						{
 							rs[ndetections] = r;
@@ -198,12 +209,7 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
 
 		//
-		//*
-		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
-			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);
-		else
-			cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(255, 0, 0), 2, 8, 0);
-		//*/
+		cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);
 
 		/*
 		if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > THRESHOLD)
@@ -386,7 +392,10 @@ int main(int argc, char* argv[])
 		fread(&numtemplates, sizeof(int), 1, file);
 
 		for(i=0; i<numtemplates; ++i)
+		{
 			LOAD_TEMPLATE(templates[i], file);
+			LOAD_TEMPLATE(smoothnesstemplates[i], file);
+		}
 
 		printf("%d templates loaded ...\n", numtemplates);
 

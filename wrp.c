@@ -505,7 +505,7 @@ int main(int argc, char* argv[])
 		sprintf(path, "%s/%s-%06d.rid", folder, tag, i);
 
 		//
-		saverid(path, warps[i]->imageData, warps[i]->height, warps[i]->width, warps[i]->widthStep);
+		saverid(path, (uint8_t*)warps[i]->imageData, warps[i]->height, warps[i]->width, warps[i]->widthStep);
 
 		//
 		printf("%s-%06d.rid\n", tag, i);
