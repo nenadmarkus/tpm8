@@ -6,6 +6,9 @@
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #endif
 
+#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file));
+#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), fread(&(t)[1], sizeof(int32_t), (t)[0], (file));
+
 int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t edgemap[], int nrows, int ncols, int ldim, int threshold)
 {
 	int i, j;
@@ -78,6 +81,14 @@ int learn_template(int32_t template[], int maxntests, float s2p, int r, int c, i
 
 			r2 = MIN(MAX(r-s/2+1, r2), r+s/2-1);
 			c2 = MIN(MAX(c-s/2+1, c2), c+s/2-1);
+
+			if(pixels[r2*ldim+c2] > pixels[r1*ldim+c1])
+			{
+				#define SWAP(a, b) ((a)=(a)^(b), (b)=(a)^(b), (a)=(a)^(b));
+
+				SWAP(r1, r2);
+				SWAP(c1, c2);
+			}
 
 			//
 			if(ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > threshold)

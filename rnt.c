@@ -9,21 +9,23 @@
 
 #define USE_CLAHE
 
-#define NTESTS (512)
+#define MAXNUMTESTS (512)
 
 #define THRESHOLD 25
 
-int n0max = 3;
+int n0max = 0;
 int r0max = 3;
 
 // -----------------------
 
-#define TDEPTH 12
+#define MAXNUMTREES 16
+int numtrees = 0;
+int32_t* trees[MAXNUMTREES];
+int32_t* tluts[MAXNUMTREES];
 
-int32_t tree[1<<(TDEPTH+1)];
-
-int templatecounts[1<<TDEPTH];
-int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
+#define MAXNUMTEMPLATES 8192
+int numtemplates = 0;
+int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
 /*
 	portable time function
@@ -142,12 +144,12 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
-				lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
+				///lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
 
 				//
-				for(i=0; i<templatecounts[lutidx]; ++i)
+				for(i=0; i<numtemplates; ++i)
 				{
-					int32_t* template = (int32_t*)&templatelut[lutidx][i][0];
+					int32_t* template = (int32_t*)&templates[i][0];
 
 					pass = match_template_at(template, THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
 
@@ -159,7 +161,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 							cs[ndetections] = c;
 							ss[ndetections] = s;
 
-							ptrs[ndetections] = templatelut[lutidx][i];
+							ptrs[ndetections] = template;
 
 							++ndetections;
 						}
@@ -381,10 +383,19 @@ int main(int argc, char* argv[])
 			return 0;
 
 		//
-		fread(&tree[0], sizeof(int32_t), 1, file);
-		fread(&tree[1], sizeof(int32_t), (1<<(tree[0]+1))-1, file);
+		fread(&numtemplates, sizeof(int), 1, file);
+
+		for(i=0; i<numtemplates; ++i)
+			LOAD_TEMPLATE(templates[i], file);
+
+		printf("%d templates loaded ...\n", numtemplates);
 
 		//
+		numtrees = 0;
+
+		/*
+		fread(&tree[0], sizeof(int32_t), 1, file); fread(&tree[1], sizeof(int32_t), (1<<(tree[0]+1))-1, file);
+
 		for(i=0; i<(1<<tree[0]); ++i)
 		{
 			fread(&templatecounts[i], sizeof(int32_t), 1, file);
@@ -395,13 +406,13 @@ int main(int argc, char* argv[])
 				fread(&templatelut[i][j][1], sizeof(int32_t), templatelut[i][j][0], file);
 			}
 		}
+		*/
 
+		//
 		fclose(file);
 	}
 	else
 		return 0;
-
-	printf("tree depth = %d\n", tree[0]); j=0; for(i=0; i<(1<<tree[0]); ++i) j+=templatecounts[i]; printf("template count = %d\n", j);
 
 	//
 	if(argc==3 || argc==4)

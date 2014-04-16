@@ -8,7 +8,7 @@
 */
 
 #define THRESHOLD 25
-#define NTESTS (256)
+#define MAXNUMTESTS (256)
 #define S2P (1/20.0f)
 
 int n0max = 5;
@@ -146,14 +146,16 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 #include "tme.c"
 #include "cng.c"
 
-int32_t* tree = 0;
+#define MAXNUMTREES 16
+int numtrees = 0;
+int32_t* trees[MAXNUMTREES];
+int32_t* tluts[MAXNUMTREES];
 
-#define TDEPTH 12
+#define MAXNUMTEMPLATES 8192
+int numtemplates = 0;
+int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
-int templatecounts[1<<TDEPTH];
-int32_t templatelut[1<<TDEPTH][64][1+NTESTS];
-
-void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int ntemplates, int tdepth)
+void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples, int tdepth)
 {
 	int n;
 
@@ -162,30 +164,29 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	//
 	t = getticks();
 
-	tree = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, ntemplates);
-
-	printf("%d regions clustered in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
+	///tree = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, numsamples);
+	///printf("%d regions clustered in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
 
 	//
 	t = getticks();
 
-	for(n=0; n<(1<<tdepth); ++n) templatecounts[n] = 0;
+	numtemplates = 0;
 
-	for(n=0; n<ntemplates; ++n)
+	for(n=0; n<numsamples; ++n)
 	{
 		int i, lutidx, learnnew;
 
 		//
-		lutidx = get_tree_output(tree, THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
+		///lutidx = get_tree_output(tree, THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
 
 		//
 		learnnew = 1;
 
-		for(i=0; i<templatecounts[lutidx]; ++i)
+		for(i=0; i<numtemplates; ++i)
 		{
 			int n1;
 
-			if( match_template_at(templatelut[lutidx][i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, r0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
+			if( match_template_at(templates[i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, r0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
 			{
 				learnnew = 0;
 			}
@@ -215,21 +216,21 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templatelut[lutidx][templatecounts[lutidx]], NTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			learn_template(templates[numtemplates], MAXNUMTESTS, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
-			++templatecounts[lutidx];
+			++numtemplates;
 
 			//
 			free(edgemap);
 
-			cvReleaseImage(&edges);
+			cvReleaseImageHeader(&edges);
 			cvReleaseImageHeader(&img);
 		}
 
 		///printf("%d\n", n);
 	}
 
-	printf("templates learned in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
+	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
 }
 
 /*
@@ -259,7 +260,7 @@ void display_image(uint8_t pixels[], int nrows, int ncols, int ldim)
 	cvReleaseImageHeader(&header);
 }
 
-int load_templates(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int maxn)
+int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int maxn)
 {
 	int n;
 
@@ -329,7 +330,7 @@ int main(int argc, char* argv[])
 	if(argc != 4)
 		return 0;
 
-	n = load_templates(argv[1], pix, rs, cs, ss, nrowss, ncolss, MAXN);
+	n = load_samples(argv[1], pix, rs, cs, ss, nrowss, ncolss, MAXN);
 
 	sscanf(argv[2], "%d", &tdepth);
 
@@ -339,7 +340,7 @@ int main(int argc, char* argv[])
 	printf("elapsed time: %f [s]\n", getticks()-t);
 
 	//
-	if(tree)
+	if(numtemplates)
 	{
 		int i, j;
 
@@ -352,23 +353,15 @@ int main(int argc, char* argv[])
 		}
 
 		//
-		fwrite(tree, sizeof(int32_t), 1<<(tree[0]+1), file);
+		fwrite(&numtemplates, sizeof(int), 1, file);
 
-		//
-		for(i=0; i<(1<<tree[0]); ++i)
-		{
-			fwrite(&templatecounts[i], sizeof(int32_t), 1, file);
+		for(i=0; i<numtemplates; ++i)
+			SAVE_TEMPLATE(templates[i], file);
 
-			for(j=0; j<templatecounts[i]; ++j)
-			{
-				fwrite(templatelut[i][j], sizeof(int32_t), 1+templatelut[i][j][0], file);
-			}
-		}
+		///fwrite(tree, sizeof(int32_t), 1<<(tree[0]+1), file);
+		///for(i=0; i<(1<<tree[0]); ++i) printf("%d ", templatecounts[i]); printf("%d\n");
 
 		fclose(file);
-
-		//
-		for(i=0; i<(1<<tree[0]); ++i) printf("%d ", templatecounts[i]); printf("%d\n");
 	}
 
 	//
