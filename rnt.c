@@ -18,7 +18,7 @@ int r0max = 3;
 
 // -----------------------
 
-#define MAXNUMTREES 16
+#define MAXNUMTREES 128
 int numtrees = 0;
 int32_t* trees[MAXNUMTREES];
 int32_t* tluts[MAXNUMTREES];
@@ -145,20 +145,16 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
-				///lutidx = get_tree_output(tree, THRESHOLD, r, c, s, pixels, nrows, ncols, ldim);
-
-				//
+				/*
 				for(i=0; i<numtemplates; ++i)
 				{
-					int32_t* template = (int32_t*)&templates[i][0];
-
-					pass = match_template_at(template, THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(templates[i], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
 						int _n1;
 
-						match_template_at(&smoothnesstemplates[i][0], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+						match_template_at(smoothnesstemplates[i], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
 						if(_n1 > smoothnesstemplates[i][0]/2)
 							pass = 0;
@@ -172,12 +168,47 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 							cs[ndetections] = c;
 							ss[ndetections] = s;
 
-							ptrs[ndetections] = template;
+							ptrs[ndetections] = templates[i];
 
 							++ndetections;
 						}
 					}
 				}
+				//*/
+
+				//*
+				for(i=0; i<numtrees; ++i)
+				{
+					lutidx = tluts[i][ get_tree_output(trees[i], THRESHOLD, r, c, s, pixels, nrows, ncols, ldim) ];
+
+					//
+					pass = match_template_at(templates[lutidx], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
+
+					if(pass)
+					{
+						int _n1;
+
+						match_template_at(smoothnesstemplates[lutidx], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+
+						if(_n1 > smoothnesstemplates[lutidx][0]/2)
+							pass = 0;
+					}
+
+					if(pass)
+					{
+						if(ndetections < maxndetections)
+						{
+							rs[ndetections] = r;
+							cs[ndetections] = c;
+							ss[ndetections] = s;
+
+							ptrs[ndetections] = templates[lutidx];
+
+							++ndetections;
+						}
+					}
+				}
+				//*/
 			}
 
 		//
@@ -407,23 +438,8 @@ int main(int argc, char* argv[])
 			LOAD_TREE(trees[i], file);
 
 			tluts[i] = (int32_t*)malloc( (1<<trees[i][0])*sizeof(int32_t) );
-			fread(&tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
+			fread(tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
 		}
-
-		/*
-		fread(&tree[0], sizeof(int32_t), 1, file); fread(&tree[1], sizeof(int32_t), (1<<(tree[0]+1))-1, file);
-
-		for(i=0; i<(1<<tree[0]); ++i)
-		{
-			fread(&templatecounts[i], sizeof(int32_t), 1, file);
-
-			for(j=0; j<templatecounts[i]; ++j)
-			{
-				fread(&templatelut[i][j][0], sizeof(int32_t), 1, file);
-				fread(&templatelut[i][j][1], sizeof(int32_t), templatelut[i][j][0], file);
-			}
-		}
-		*/
 
 		//
 		fclose(file);

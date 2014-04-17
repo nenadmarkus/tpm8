@@ -172,7 +172,7 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 	
 */
 
-#define MAXNUMTREES 16
+#define MAXNUMTREES 128
 int numtrees = 0;
 int32_t* trees[MAXNUMTREES];
 int32_t* tluts[MAXNUMTREES];
@@ -191,7 +191,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	//
 	t = getticks();
 	
-	numtrees = 5;
+	numtrees = 30;
 
 	for(n=0; n<numtrees; ++n)
 	{
@@ -254,7 +254,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 					tluts[i][lutidx] = numtemplates;
 
-					//printf("%03d ", lutidx);
+					///if(lutidx >= (1<<trees[i][0])) printf("%d\n", lutidx);
 				}
 				//printf("\n");
 
@@ -408,7 +408,7 @@ int main(int argc, char* argv[])
 		for(i=0; i<numtrees; ++i)
 		{
 			SAVE_TREE(trees[i], file);
-			fwrite(&tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
+			fwrite(tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
 
 			free(trees[i]);
 			free(tluts[i]);
