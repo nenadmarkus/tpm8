@@ -11,9 +11,6 @@
 #define MAXNUMTESTS (256)
 #define S2P (1/20.0f)
 
-int n0max = 5;
-int r0max = 3;
-
 /*
 	portable time function
 */
@@ -193,9 +190,17 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	//
 	t = getticks();
+	
+	numtrees = 5;
 
-	///tree = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, numsamples);
-	///printf("%d regions clustered in %f [ms]\n", ntemplates, 1000.0f*(getticks()-t));
+	for(n=0; n<numtrees; ++n)
+	{
+		trees[n] = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, numsamples);
+
+		tluts[n] = (int32_t*)calloc(1<<tdepth, sizeof(int32_t));
+	}
+
+	printf("%d samples clustered in %f [ms]\n", numsamples, 1000.0f*(getticks()-t));
 
 	//
 	t = getticks();
@@ -207,24 +212,9 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		int i, lutidx, learnnew;
 
 		//
-		///lutidx = get_tree_output(tree, THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
-
-		//
 		learnnew = 1;
 
-		/*
-		for(i=0; i<numtemplates; ++i)
-		{
-			int n1;
-
-			if( match_template_at(templates[i], THRESHOLD, rs[n], cs[n], ss[n], &n1, n0max, r0max, pix[n], nrowss[n], ncolss[n], ncolss[n]) )
-			{
-				learnnew = 0;
-			}
-		}
-		*/
-
-		if(learnnew && numtemplates < MAXNUMTEMPLATES)
+		if(learnnew && numtemplates<MAXNUMTEMPLATES)
 		{
 			IplImage* edges;
 			IplImage* img;
@@ -256,7 +246,21 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); cvWaitKey(0);
 
 			if(i)
+			{
+				//
+				for(i=0; i<numtrees; ++i)
+				{
+					lutidx = get_tree_output(trees[i], THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
+
+					tluts[i][lutidx] = numtemplates;
+
+					//printf("%03d ", lutidx);
+				}
+				//printf("\n");
+
+				//
 				++numtemplates;
+			}
 
 			//
 			free(edgemap);
@@ -352,7 +356,7 @@ int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int
 int main(int argc, char* argv[])
 {
 	float t;
-	int n, tdepth;
+	int n, tdepth, i;
 
 	#define MAXN (1<<17)
 
@@ -375,11 +379,12 @@ int main(int argc, char* argv[])
 	learn_templates(pix, rs, cs, ss, nrowss, ncolss, n, tdepth);
 	printf("elapsed time: %f [s]\n", getticks()-t);
 
+	for(i=0; i<n; ++i)
+		free(pix[i]);
+
 	//
 	if(numtemplates)
 	{
-		int i, j;
-
 		FILE* file = fopen(argv[3], "wb");
 
 		if(!file)
@@ -395,6 +400,18 @@ int main(int argc, char* argv[])
 		{
 			SAVE_TEMPLATE(templates[i], file);
 			SAVE_TEMPLATE(smoothnesstemplates[i], file);
+		}
+
+		//
+		fwrite(&numtrees, sizeof(int), 1, file);
+
+		for(i=0; i<numtrees; ++i)
+		{
+			SAVE_TREE(trees[i], file);
+			fwrite(&tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
+
+			free(trees[i]);
+			free(tluts[i]);
 		}
 
 		///fwrite(tree, sizeof(int32_t), 1<<(tree[0]+1), file);

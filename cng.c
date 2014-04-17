@@ -1,3 +1,10 @@
+
+//#define SAVE_TREE(tree, file) fwrite((tree), sizeof(int32_t), 1<<((tree)[0]+1), (file));
+//#define LOAD_TREE(tree, file) (tree)=(int32_t*)malloc(sizeof(int32_t)), fread(&(tree)[0], sizeof(int32_t), 1, (file)), (tree)=(int32_t*)realloc((tree), (1<<((tree)[0]+1))*sizeof(int32_t)),fread(&(tree)[1], sizeof(int32_t), 1<<((tree)[0]+1), (file));
+
+#define SAVE_TREE(tree, file) fwrite((tree), sizeof(int32_t), 1<<(tree)[0], (file));
+#define LOAD_TREE(tree, file) (tree)=(int32_t*)malloc(sizeof(int32_t)), fread(&(tree)[0], sizeof(int32_t), 1, (file)), (tree)=(int32_t*)realloc((tree), (1<<(tree)[0])*sizeof(int32_t)),fread(&(tree)[1], sizeof(int32_t), (1<<(tree)[0])-1, (file));
+
 float get_test_quality(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
 {
 	int i, n0, n1;
@@ -76,7 +83,7 @@ int grow_subtree(int32_t tcodes[], int nodeidx, int d, int maxd, int rs[], int c
 	int i, nrands, n0, n1, Q;
 
 	//
-	if(d > maxd)
+	if(d >= maxd)
 	{
 		///printf("%d ", n);
 
@@ -147,7 +154,8 @@ int32_t* grow_tree(int d, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 		inds[i] = i;
 
 	//
-	tree = (int32_t*)malloc( (1<<(d+1))*sizeof(int32_t) );
+	///tree = (int32_t*)malloc( (1<<(d+1))*sizeof(int32_t) );
+	tree = (int32_t*)malloc( (1<<d)*sizeof(int32_t) );
 
 	//
 	tree[0] = d;

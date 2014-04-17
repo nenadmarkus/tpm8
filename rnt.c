@@ -400,7 +400,15 @@ int main(int argc, char* argv[])
 		printf("%d templates loaded ...\n", numtemplates);
 
 		//
-		numtrees = 0;
+		fread(&numtrees, sizeof(int), 1, file);
+
+		for(i=0; i<numtrees; ++i)
+		{
+			LOAD_TREE(trees[i], file);
+
+			tluts[i] = (int32_t*)malloc( (1<<trees[i][0])*sizeof(int32_t) );
+			fread(&tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
+		}
 
 		/*
 		fread(&tree[0], sizeof(int32_t), 1, file); fread(&tree[1], sizeof(int32_t), (1<<(tree[0]+1))-1, file);
