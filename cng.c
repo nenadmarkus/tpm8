@@ -78,6 +78,35 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	return n0;
 }
 
+int32_t generate_test()
+{
+	int32_t tcode;
+
+	int stop = 0;
+
+	//
+	while(!stop)
+	{
+		int r1, c1, r2, c2;
+
+		//
+		tcode = mwcrand();
+
+		//
+		r1 = ((int8_t*)&tcode)[0];
+		c1 = ((int8_t*)&tcode)[1];
+		r2 = ((int8_t*)&tcode)[2];
+		c2 = ((int8_t*)&tcode)[3];
+
+		//
+		if(r1*r1+c1*c1<128*128 && r2*r2+c2*c2<128*128 && (r1-r2)*(r1-r2)+(c1-c2)*(c1-c2)<16*16)
+			stop = 1;
+	}
+
+	//
+	return tcode;
+}
+
 int grow_subtree(int32_t tcodes[], int nodeidx, int d, int maxd, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
 {
 	int i, nrands, n0, n1, Q;
@@ -114,7 +143,7 @@ int grow_subtree(int32_t tcodes[], int nodeidx, int d, int maxd, int rs[], int c
 		int32_t tcode;
 
 		//
-		tcode = mwcrand();
+		tcode = generate_test();
 
 		q = get_test_quality(tcode, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
 

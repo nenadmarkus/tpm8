@@ -8,7 +8,7 @@
 */
 
 #define THRESHOLD 25
-#define MAXNUMTESTS (256)
+#define MAXNUMTESTS (128)
 #define S2P (1/20.0f)
 
 /*
@@ -190,8 +190,8 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	//
 	t = getticks();
-	
-	numtrees = 30;
+
+	numtrees = 0;
 
 	for(n=0; n<numtrees; ++n)
 	{
@@ -253,6 +253,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 					lutidx = get_tree_output(trees[i], THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
 
 					tluts[i][lutidx] = numtemplates;
+					///++tluts[i][lutidx];
 
 					///if(lutidx >= (1<<trees[i][0])) printf("%d\n", lutidx);
 				}
@@ -374,13 +375,12 @@ int main(int argc, char* argv[])
 
 	sscanf(argv[2], "%d", &tdepth);
 
+	///for(i=0; i<n; ++i) free(pix[i]);
+
 	//
 	t = getticks();
 	learn_templates(pix, rs, cs, ss, nrowss, ncolss, n, tdepth);
 	printf("elapsed time: %f [s]\n", getticks()-t);
-
-	for(i=0; i<n; ++i)
-		free(pix[i]);
 
 	//
 	if(numtemplates)
@@ -410,15 +410,41 @@ int main(int argc, char* argv[])
 			SAVE_TREE(trees[i], file);
 			fwrite(tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
 
-			free(trees[i]);
-			free(tluts[i]);
+			///free(trees[i]);
+			///free(tluts[i]);
 		}
-
-		///fwrite(tree, sizeof(int32_t), 1<<(tree[0]+1), file);
-		///for(i=0; i<(1<<tree[0]); ++i) printf("%d ", templatecounts[i]); printf("%d\n");
 
 		fclose(file);
 	}
+
+	//
+	/*
+	for(n=0; n<numtrees; ++n)
+	{
+		for(i=0; i<(1<<trees[n][0]); ++i)
+			printf("%d ", tluts[n][i]);
+		printf("\n------------------------------\n");
+	}
+	//*/
+
+	/*
+	int counts[1024];
+
+	for(i=0; i<numtemplates; ++i)
+		counts[i] = 0;
+
+	for(i=0; i<numtrees; ++i)
+	{
+		int j;
+
+		//
+		for(j=0; j<(1<<trees[i][0]); ++j)
+			++counts[ tluts[i][j] ];
+	}
+
+	for(i=0; i<numtemplates; ++i)
+		printf("%d\n", counts[i]);
+	//*/
 
 	//
 	return 0;

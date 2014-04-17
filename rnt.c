@@ -145,7 +145,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				int lutidx, i, n1, pass;
 
 				//
-				/*
+				//*
 				for(i=0; i<numtemplates; ++i)
 				{
 					pass = match_template_at(templates[i], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
@@ -156,7 +156,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 
 						match_template_at(smoothnesstemplates[i], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
-						if(_n1 > smoothnesstemplates[i][0]/2)
+						if(_n1 > smoothnesstemplates[i][0]/3)
 							pass = 0;
 					}
 
@@ -176,7 +176,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 				}
 				//*/
 
-				//*
+				/*
 				for(i=0; i<numtrees; ++i)
 				{
 					lutidx = tluts[i][ get_tree_output(trees[i], THRESHOLD, r, c, s, pixels, nrows, ncols, ldim) ];
@@ -409,7 +409,7 @@ void process_video_frames(char* path)
 
 int main(int argc, char* argv[])
 {
-	int i, j;
+	int i;
 
 	//
 	if(argc >= 2)
