@@ -156,7 +156,7 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 
 						match_template_at(smoothnesstemplates[i], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
-						if(_n1 > smoothnesstemplates[i][0]/3)
+						if(_n1 > smoothnesstemplates[i][0]/2)
 							pass = 0;
 					}
 

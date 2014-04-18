@@ -1,7 +1,3 @@
-
-//#define SAVE_TREE(tree, file) fwrite((tree), sizeof(int32_t), 1<<((tree)[0]+1), (file));
-//#define LOAD_TREE(tree, file) (tree)=(int32_t*)malloc(sizeof(int32_t)), fread(&(tree)[0], sizeof(int32_t), 1, (file)), (tree)=(int32_t*)realloc((tree), (1<<((tree)[0]+1))*sizeof(int32_t)),fread(&(tree)[1], sizeof(int32_t), 1<<((tree)[0]+1), (file));
-
 #define SAVE_TREE(tree, file) fwrite((tree), sizeof(int32_t), 1<<(tree)[0], (file));
 #define LOAD_TREE(tree, file) (tree)=(int32_t*)malloc(sizeof(int32_t)), fread(&(tree)[0], sizeof(int32_t), 1, (file)), (tree)=(int32_t*)realloc((tree), (1<<(tree)[0])*sizeof(int32_t)),fread(&(tree)[1], sizeof(int32_t), (1<<(tree)[0])-1, (file));
 

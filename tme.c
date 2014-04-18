@@ -9,7 +9,7 @@
 #define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file));
 #define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), fread(&(t)[1], sizeof(int32_t), (t)[0], (file));
 
-int learn_template(int32_t template[], int maxnumtests, int type, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t mask[], int nrows, int ncols, int ldim, int threshold)
+int learn_template(int32_t template[], int maxnumtests, int useorientation, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t mask[], int nrows, int ncols, int ldim, int threshold)
 {
 	int i, j, n, numiters, maxnumiters, p;
 
@@ -46,7 +46,7 @@ int learn_template(int32_t template[], int maxnumtests, int type, float s2p, int
 	n = 0;
 	ptr = (int8_t*)&template[1];
 
-	if(type == 1)
+	if(useorientation == 1)
 	{
 		p = (int)( s*s2p );
 		maxnumiters = 16*maxnumtests;
