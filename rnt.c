@@ -13,7 +13,7 @@
 
 #define THRESHOLD 20
 
-int n0max = 0;
+int n0max = 2;
 int r0max = 3;
 
 // -----------------------
@@ -27,6 +27,9 @@ int32_t* tluts[MAXNUMTREES];
 int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
+
+int numtemplateclusters = 0;
+int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
 
 /*
 	portable time function
@@ -118,7 +121,123 @@ uint32_t mwcrand()
 #include "cng.c"
 #include "ahe.c"
 
-int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetections,
+float get_overlap(int r1, int c1, int s1, int r2, int c2, int s2)
+{
+	float overr, overc;
+
+	//
+	overr = MAX(0, MIN(r1+s1/2, r2+s2/2) - MAX(r1-s1/2, r2-s2/2));
+	overc = MAX(0, MIN(c1+s1/2, c2+s2/2) - MAX(c1-s1/2, c2-s2/2));
+
+	//
+	return overr*overc/(float)(s1*s1+s2*s2-overr*overc);
+}
+
+void ccdfs(int a[], int i, int rs[], int cs[], int ss[], int n)
+{
+	int j;
+
+	//
+	for(j=0; j<n; ++j)
+		if(a[j]==0 && get_overlap(rs[i], cs[i], ss[i], rs[j], cs[j], ss[j])>0.75f)
+		{
+			//
+			a[j] = a[i];
+
+			//
+			ccdfs(a, j, rs, cs, ss, n);
+		}
+}
+
+int find_connected_components(int a[], int rs[], int cs[], int ss[], int n)
+{
+	int i, ncc, cc;
+
+	//
+	if(!n)
+		return 0;
+
+	//
+	for(i=0; i<n; ++i)
+		a[i] = 0;
+
+	//
+	ncc = 0;
+	cc = 1;
+
+	for(i=0; i<n; ++i)
+		if(a[i] == 0)
+		{
+			//
+			a[i] = cc;
+
+			//
+			ccdfs(a, i, rs, cs, ss, n);
+
+			//
+			++ncc;
+			++cc;
+		}
+
+	//
+	return ncc;
+}
+
+int cluster_detections(int a[], int rs[], int cs[], int ss[], int qs[], int n)
+{
+	int ncc, cc;
+
+	//
+	ncc = find_connected_components(a, rs, cs, ss, n);
+
+	if(!ncc)
+		return 0;
+
+	//
+	int idx = 0;
+
+	for(cc=1; cc<=ncc; ++cc)
+	{
+		int i, k;
+
+		int sumrs=0, sumcs=0, sumss=0, sumqs=0;
+
+		//
+		k = 0;
+
+		for(i=0; i<n; ++i)
+			if(a[i] == cc)
+			{
+				sumrs += rs[i];
+				sumcs += cs[i];
+				sumss += ss[i];
+				sumqs += qs[i];
+
+				++k;
+			}
+
+		
+		///for(i=0; i<n; ++i)
+		///	if(a[i] == cc)
+		///		qs[i] = sumqs;
+
+		//
+		qs[idx] = sumqs; // accumulated confidence measure
+
+		//
+		rs[idx] = sumrs/k;
+		cs[idx] = sumcs/k;
+		ss[idx] = sumss/k;
+
+		//
+		++idx;
+	}
+
+	//
+	return idx;
+}
+
+int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int maxndetections,
 					uint8_t pixels[], int nrows, int ncols, int ldim,
 					float scalefactor, float stridefactor, float minsize, float maxsize, int n0max, int r0max)
 {
@@ -146,6 +265,9 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 
 				//
 				//*
+				if(!match_template_at(clustertemplates[0], THRESHOLD, r, c, s, &n1, 3, MAXNUMTESTS, pixels, nrows, ncols, ldim))
+					continue;
+
 				for(i=0; i<numtemplates; ++i)
 				{
 					pass = match_template_at(templates[i], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
@@ -167,6 +289,8 @@ int match_templates(int rs[], int cs[], int ss[], int32_t* ptrs[], int maxndetec
 							rs[ndetections] = r;
 							cs[ndetections] = c;
 							ss[ndetections] = s;
+
+							qs[ndetections] = n1;
 
 							ptrs[ndetections] = templates[i];
 
@@ -266,7 +390,7 @@ void process_image(IplImage* img, int draw, int print)
 
 	#define MAXNDETECTIONS 8192
 	int ndetections;
-	int rs[MAXNDETECTIONS], cs[MAXNDETECTIONS], ss[MAXNDETECTIONS];
+	int a[MAXNDETECTIONS], rs[MAXNDETECTIONS], cs[MAXNDETECTIONS], ss[MAXNDETECTIONS], qs[MAXNDETECTIONS];
 	int32_t* ptrs[MAXNDETECTIONS];
 
 	float t;
@@ -296,29 +420,39 @@ void process_image(IplImage* img, int draw, int print)
 #endif
 
 	//
-	float SCALEFACTOR = 1.05f;
-	float STRIDEFACTOR = 0.05f;
+	float SCALEFACTOR = 1.1f;
+	float STRIDEFACTOR = 0.06f;
 
-	int MINSIZE = 70;
-	int MAXSIZE = 120;
+	int MINSIZE = 75;
+	int MAXSIZE = 150;
 
 	t = getticks();
-	ndetections = match_templates(rs, cs, ss, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
+	ndetections = match_templates(rs, cs, ss, qs, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
+
+#define USE_CLUSTERING
+#ifdef USE_CLUSTERING
+	ndetections = cluster_detections(a, rs, cs, ss, qs, ndetections);
+#endif
+
 	t = getticks()-t;
 
 	//
 	if(draw)
 		for(i=0; i<ndetections; ++i)
 		{
+#ifndef USE_CLUSTERING
 			draw_template_pattern(img, ptrs[i], rs[i], cs[i], ss[i], pixels, nrows, ncols, ldim);
-
+#endif
 			cvCircle(img, cvPoint(cs[i], rs[i]), ss[i]/2, CV_RGB(255, 0, 0), 2, 8, 0);
 		}
 
 	// if the flag is set, print the results to standard output
 	if(print)
 	{
-		printf("%f [ms] ...\n", 1000.0f*t);
+		///printf("%f [ms] ...\n", 1000.0f*t);
+
+		for(i=0; i<ndetections; ++i)
+			printf("%d %d %d %d\n", rs[i], cs[i], ss[i], qs[i]);
 	}
 }
 
@@ -428,7 +562,15 @@ int main(int argc, char* argv[])
 			LOAD_TEMPLATE(smoothnesstemplates[i], file);
 		}
 
-		printf("%d templates loaded ...\n", numtemplates);
+		//printf("%d templates loaded ...\n", numtemplates);
+
+		//
+		fread(&numtemplateclusters, sizeof(int), 1, file);
+
+		for(i=0; i<numtemplateclusters; ++i)
+		{
+			LOAD_TEMPLATE(clustertemplates[i], file);
+		}
 
 		//
 		fread(&numtrees, sizeof(int), 1, file);
@@ -456,8 +598,10 @@ int main(int argc, char* argv[])
 
 		if(argc==3)
 		{
+			/*
 			cvShowImage("rnt", img);
 			cvWaitKey(0);
+			//*/
 		}
 		else
 			cvSaveImage(argv[3], img, 0);

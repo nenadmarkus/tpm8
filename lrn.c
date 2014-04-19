@@ -141,6 +141,7 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 
 #include "bnt.c"
 #include "tme.c"
+#include "tmc.c"
 #include "cng.c"
 
 void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
@@ -182,11 +183,16 @@ int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
+int numtemplateclusters = 0;
+int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
+
 void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples, int tdepth)
 {
-	int n;
+	int i, n;
 
 	float t;
+
+	uint8_t* edgess[2048];
 
 	//
 	t = getticks();
@@ -209,7 +215,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	for(n=0; n<numsamples; ++n)
 	{
-		int i, lutidx, learnnew;
+		int lutidx, learnnew;
 
 		//
 		learnnew = 1;
@@ -235,43 +241,66 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 			//
 			cvCanny(img, edges, 150, 225, 3);
+			//cvCanny(img, edges, 50, 100, 3);
 
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			i = learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
-			//draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); cvWaitKey(0);
+			///draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
 
-			if(i)
-			{
-				//
-				for(i=0; i<numtrees; ++i)
-				{
-					lutidx = get_tree_output(trees[i], THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
-
-					tluts[i][lutidx] = numtemplates;
-					///++tluts[i][lutidx];
-
-					///if(lutidx >= (1<<trees[i][0])) printf("%d\n", lutidx);
-				}
-				//printf("\n");
-
-				//
-				++numtemplates;
-			}
+			edgess[numtemplates] = edgemap;
 
 			//
-			free(edgemap);
+			for(i=0; i<numtrees; ++i)
+			{
+				lutidx = get_tree_output(trees[i], THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
+
+				tluts[i][lutidx] = numtemplates;
+			}
+			//printf("\n");
+
+			//
+			++numtemplates;
+
+			//
+			///free(edgemap);
 
 			cvReleaseImageHeader(&edges);
 			cvReleaseImageHeader(&img);
 		}
 	}
 
+	//
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
+
+	//
+	learn_cluster_template(clustertemplates[0], 32, 1, 1.5f*S2P, rs, cs, ss, pix, edgess, nrowss, ncolss, ncolss, numtemplates, THRESHOLD);
+
+	numtemplateclusters = 1;
+
+	/*
+	printf("%d\n", clustertemplates[0][0]);
+	for(i=0; i<numtemplates; ++i)
+	{
+		IplImage* tmpimg = cvCreateImageHeader(cvSize(ncolss[i], nrowss[i]), IPL_DEPTH_8U, 1);;
+		tmpimg->imageData = (char*)pix[i];
+		tmpimg->widthStep = ncolss[i];
+
+		//
+		//draw_template_pattern(tmpimg, templates[i], rs[i], cs[i], ss[i], pix[i], nrowss[i], ncolss[i], ncolss[i]);
+		draw_template_pattern(tmpimg, clustertemplates[0], rs[i], cs[i], ss[i], pix[i], nrowss[i], ncolss[i], ncolss[i]);
+		cvCircle(tmpimg, cvPoint(cs[i], rs[i]), ss[i]/2, CV_RGB(255, 255, 255), 2, 8, 0);
+		cvShowImage("...", tmpimg);
+		cvWaitKey(0);
+
+		//
+		cvReleaseImageHeader(&tmpimg);
+	}
+	*/
 }
 
 /*
@@ -400,6 +429,14 @@ int main(int argc, char* argv[])
 		{
 			SAVE_TEMPLATE(templates[i], file);
 			SAVE_TEMPLATE(smoothnesstemplates[i], file);
+		}
+
+		//
+		fwrite(&numtemplateclusters, sizeof(int), 1, file);
+
+		for(i=0; i<numtemplateclusters; ++i)
+		{
+			SAVE_TEMPLATE(clustertemplates[i], file);
 		}
 
 		//

@@ -9,6 +9,56 @@
 #define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file));
 #define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), fread(&(t)[1], sizeof(int32_t), (t)[0], (file));
 
+float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
+{
+	int r1, r2, c1, c2, cnt;
+	float norm, vdiff;
+
+	float gr, gc, o;
+	
+	//
+	cnt = 0;
+
+	gr = 0.0f;
+	gc = 0.0f;
+	
+	for(r1=-ksize; r1<+ksize; ++r1)
+		for(c1=-ksize; c1<+ksize; ++c1)
+		{
+			if(r1*r1+c1*c1 > ksize*ksize)
+				continue;
+		
+			for(r2=-ksize; r2<+ksize; ++r2)
+				for(c2=-ksize; c2<+ksize; ++c2)
+				{
+					if(r2*r2+c2*c2 > ksize*ksize)
+						continue;
+				
+					norm = sqrt( (r1-r2)*(r1-r2) + (c1-c2)*(c1-c2) );
+			
+					if(norm < 3)
+						continue;
+
+					vdiff = pixels[(r+r1)*ldim+(c+c1)] - pixels[(r+r2)*ldim+(c+c2)];
+				
+					gr += vdiff*(r1-r2)/norm;
+					gc += vdiff*(c1-c2)/norm;
+				
+					++cnt;
+				}
+		}
+
+	//
+	gr /= cnt;
+	gc /= cnt;
+
+	//
+	if(gc == 0.0f)
+		return 1.57f;
+	else
+		return atan( gr/gc );
+}
+
 int learn_template(int32_t template[], int maxnumtests, int useorientation, float s2p, int r, int c, int s, uint8_t pixels[], uint8_t mask[], int nrows, int ncols, int ldim, int threshold)
 {
 	int i, j, n, numiters, maxnumiters, p;
@@ -64,6 +114,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			e = mwcrand()%en;
 
 			//
+			/*
 			gr = pixels[(ers[e]+1)*ldim+ecs[e]] - pixels[(ers[e]-1)*ldim+ecs[e]];
 			gc = pixels[ers[e]*ldim+(ecs[e]+1)] - pixels[ers[e]*ldim+(ecs[e]-1)];
 
@@ -71,6 +122,9 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				o = 1.57f;
 			else
 				o = atan( gr/gc );
+			*/
+
+			o = getorient(ers[e], ecs[e], pixels, nrows, ncols, ldim, 4);
 
 			//
 			r1 = MIN(MAX(r-s/2+1, ers[e]-sin(o)*p), r+s/2-1);
