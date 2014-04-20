@@ -265,7 +265,7 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 				//
 				//*
-				if(!match_template_at(clustertemplates[0], THRESHOLD, r, c, s, &n1, 3, MAXNUMTESTS, pixels, nrows, ncols, ldim))
+				if(numtemplateclusters && !match_template_at(clustertemplates[0], THRESHOLD, r, c, s, &n1, 3, MAXNUMTESTS, pixels, nrows, ncols, ldim))
 					continue;
 
 				for(i=0; i<numtemplates; ++i)
@@ -314,8 +314,8 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 						match_template_at(smoothnesstemplates[lutidx], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
-						if(_n1 > smoothnesstemplates[lutidx][0]/2)
-							pass = 0;
+						//if(_n1 > smoothnesstemplates[lutidx][0]/2)
+						//	pass = 0;
 					}
 
 					if(pass)

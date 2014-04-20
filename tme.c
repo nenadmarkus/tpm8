@@ -15,27 +15,27 @@ float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, 
 	float norm, vdiff;
 
 	float gr, gc, o;
-	
+
 	//
 	cnt = 0;
 
 	gr = 0.0f;
 	gc = 0.0f;
-	
+
 	for(r1=-ksize; r1<+ksize; ++r1)
 		for(c1=-ksize; c1<+ksize; ++c1)
 		{
 			if(r1*r1+c1*c1 > ksize*ksize)
 				continue;
-		
+
 			for(r2=-ksize; r2<+ksize; ++r2)
 				for(c2=-ksize; c2<+ksize; ++c2)
 				{
 					if(r2*r2+c2*c2 > ksize*ksize)
 						continue;
-				
+
 					norm = sqrt( (r1-r2)*(r1-r2) + (c1-c2)*(c1-c2) );
-			
+
 					if(norm < 3)
 						continue;
 
@@ -43,7 +43,7 @@ float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, 
 				
 					gr += vdiff*(r1-r2)/norm;
 					gc += vdiff*(c1-c2)/norm;
-				
+
 					++cnt;
 				}
 		}
@@ -237,7 +237,7 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 
 	//
 	if(!template[0])
-		return 0;
+		return 1;
 
 	//
 	n0 = 0;

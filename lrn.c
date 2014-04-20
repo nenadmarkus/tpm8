@@ -186,6 +186,45 @@ int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 int numtemplateclusters = 0;
 int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
 
+typedef struct _tnode
+{
+#define NODETYPE_EMPTY 0
+#define NODETYPE_INNER 1
+#define NODETYPE_TERMI 2
+
+	int nodetype;
+
+	int32_t* templates[2];
+
+	struct _tnode* children[2];
+
+} tnode;
+
+tnode* _grow_tree(uint8_t* pixelss[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int n)
+{
+	return 0;
+}
+
+void cluster_templates(int32_t templates[], uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int n)
+{
+	int i, stop;
+
+	//
+	stop = 0;
+
+	while(!stop)
+	{
+		int found;
+
+		//
+		found = 0;
+
+		//for(i=0; i<n; ++i)
+		//	if(!)
+			
+	}
+}
+
 void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples, int tdepth)
 {
 	int i, n;
@@ -246,7 +285,8 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			///learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			learn_cluster_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, &rs[n], &cs[n], &ss[n], &pix[n], &edgemap, &nrowss[n], &ncolss[n], &ncolss[n], 1, THRESHOLD);
 
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
@@ -278,9 +318,10 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
 
 	//
+	//*
 	learn_cluster_template(clustertemplates[0], 32, 1, 1.5f*S2P, rs, cs, ss, pix, edgess, nrowss, ncolss, ncolss, numtemplates, THRESHOLD);
-
 	numtemplateclusters = 1;
+	//*/
 
 	/*
 	printf("%d\n", clustertemplates[0][0]);
