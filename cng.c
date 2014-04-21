@@ -1,30 +1,150 @@
-#define SAVE_TREE(tree, file) fwrite((tree), sizeof(int32_t), 1<<(tree)[0], (file));
-#define LOAD_TREE(tree, file) (tree)=(int32_t*)malloc(sizeof(int32_t)), fread(&(tree)[0], sizeof(int32_t), 1, (file)), (tree)=(int32_t*)realloc((tree), (1<<(tree)[0])*sizeof(int32_t)),fread(&(tree)[1], sizeof(int32_t), (1<<(tree)[0])-1, (file));
+#define SWAP(a, b) (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
 
-float get_test_quality(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
+typedef struct _tnode
 {
-	int i, n0, n1;
+	int leaf, tag;
+
+	int32_t* template;
+
+	struct _tnode* subtree1;
+	struct _tnode* subtree2;
+
+} tnode;
+
+int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, float s2p, int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edgemaps[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int threshold)
+{
+	int i, j, k, newstacksize, numiters, maxnumiters, p;
+
+	int8_t* stackbyteptr;
+
+	static int ers[128][8192], ecs[128][8192], ens[8192];
+
+	int r1, c1, r2, c2;
 
 	//
-	n0 = 0;
-	n1 = 0;
+	for(k=0; k<n; ++k)
+	{
+		ens[k] = 0;
 
-	for(i=0; i<n; ++i)
-		if( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
-			++n0;
-		else
-			++n1;
+		//
+		for(i=rs[inds[k]]-ss[inds[k]]/2; i<rs[inds[k]]+ss[inds[k]]/2; ++i)
+			for(j=cs[inds[k]]-ss[inds[k]]/2; j<cs[inds[k]]+ss[inds[k]]/2; ++j)
+				if(edgemaps[inds[k]][i*ldims[inds[k]]+j])
+				{
+					if( (i-rs[inds[k]])*(i-rs[inds[k]]) + (j-cs[inds[k]])*(j-cs[inds[k]]) < (ss[inds[k]]-2)*(ss[inds[k]]-2)/4 )
+					{
+						ers[k][ens[k]] = i;
+						ecs[k][ens[k]] = j;
+
+						++ens[k];
+					}
+				}
+	}
 
 	//
-	return MIN(n0, n1);
+	newstacksize = stacksize;
+
+	stackbyteptr = (int8_t*)&stack[0];
+
+	if(1)
+	{
+		maxnumiters = 2048;
+
+		numiters = 0;
+
+		while(newstacksize<maxstacksize && numiters<maxnumiters)
+		{
+			float o;
+
+			int e;
+
+			//
+			k = mwcrand()%n;
+			e = mwcrand()%ens[k];
+
+			//
+			p = (int)( ss[inds[k]]*s2p );
+
+			//
+			o = getorient(ers[k][e], ecs[k][e], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]], 3);
+
+			//
+			r1 = MIN(MAX(rs[inds[k]]-ss[inds[k]]/2+1, ers[k][e]-sin(o)*p), rs[inds[k]]+ss[inds[k]]/2-1);
+			c1 = MIN(MAX(cs[inds[k]]-ss[inds[k]]/2+1, ecs[k][e]-cos(o)*p), cs[inds[k]]+ss[inds[k]]/2-1);
+
+			r2 = MIN(MAX(rs[inds[k]]-ss[inds[k]]/2+1, ers[k][e]+sin(o)*p), rs[inds[k]]+ss[inds[k]]/2-1);
+			c2 = MIN(MAX(cs[inds[k]]-ss[inds[k]]/2+1, ecs[k][e]+cos(o)*p), cs[inds[k]]+ss[inds[k]]/2-1);
+
+			//
+			stackbyteptr[4*newstacksize+0] = NORMALIZATION*(r1-rs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+1] = NORMALIZATION*(c1-cs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+2] = NORMALIZATION*(r2-rs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+3] = NORMALIZATION*(c2-cs[inds[k]])/ss[inds[k]];
+
+			//
+			int ok = 1;
+
+			for(i=0; i<newstacksize; ++i)
+				/*
+					proximity requirements
+				*/
+				if(get_bintest_proximity(stack[i], stack[newstacksize]) < (maxnumiters-numiters)*255/maxnumiters)
+					ok = 0;
+
+			int nfails = 0;
+
+			for(k=0; k<n; ++k)
+				/*
+					stability requirements
+				*/
+				for(i=0; i<32; ++i)
+					if( 0==bintest(stack[newstacksize], threshold, rs[inds[k]]+mwcrand()%(p/2+1)-(p/2), cs[inds[k]]+mwcrand()%(p/2+1)-(p/2), ss[inds[k]], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
+					{
+						++nfails;
+						break;
+					}
+
+			if(nfails > 0)
+				ok = 0;
+
+			//
+			if(ok)
+				++newstacksize;
+
+			//
+			++numiters;
+		}
+	}
+
+	//
+	return newstacksize;
 }
 
-int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
+float get_similarity
+	(
+		int32_t t1[], int r1, int c1, int s1, uint8_t p1[], int nrows1, int ncols1, int ldim1,
+		int32_t t2[], int r2, int c2, int s2, uint8_t p2[], int nrows2, int ncols2, int ldim2
+	)
+{
+	int n1, n2;
+	int s12, s21;
+
+	//
+	n1 = t1[0];
+	n2 = t2[0];
+
+	//
+	match_template_at(t1, THRESHOLD, r2, c2, s2, &s12, n1, n1, p2, nrows2, ncols2, ldim2);
+	match_template_at(t2, THRESHOLD, r1, c1, s1, &s21, n2, n2, p1, nrows1, ncols1, ldim1);
+
+	//
+	return ( s12/(float)n1 + s21/(float)n2 )/2.0f;
+}
+
+int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
 {
 	int stop;
 	int i, j;
-
-	int n0;
 
 	//
 	stop = 0;
@@ -35,7 +155,20 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	while(!stop)
 	{
 		//
-		while( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
+		while
+		(
+			get_similarity
+			(
+				templates[inds[0]], rs[inds[0]], cs[inds[0]], ss[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
+				templates[inds[i]], rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]
+			)
+				>=
+			get_similarity
+			(
+				templates[inds[i]], rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]],
+				templates[inds[n-1]], rs[inds[n-1]], cs[inds[n-1]], ss[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
+			)
+		)
 		{
 			if( i==j )
 				break;
@@ -43,7 +176,20 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 				++i;
 		}
 
-		while( bintest(tcode, THRESHOLD, rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]) )
+		while
+		(
+			get_similarity
+			(
+				templates[inds[0]], rs[inds[0]], cs[inds[0]], ss[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
+				templates[inds[j]], rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]
+			)
+				<=
+			get_similarity
+			(
+				templates[inds[j]], rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]],
+				templates[inds[n-1]], rs[inds[n-1]], cs[inds[n-1]], ss[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
+			)
+		)
 		{
 			if( i==j )
 				break;
@@ -55,122 +201,82 @@ int split_data(int tcode, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 		if( i==j )
 			stop = 1;
 		else
-		{
-			// swap
-			inds[i] = inds[i] ^ inds[j];
-			inds[j] = inds[i] ^ inds[j];
-			inds[i] = inds[i] ^ inds[j];
-		}
+			SWAP(inds[i], inds[j]);
 	}
 
 	//
-	n0 = 0;
-
-	for(i=0; i<n; ++i)
-		if( !bintest(tcode, THRESHOLD, rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]) )
-			++n0;
-
-	//
-	return n0;
+	return i; // ?
 }
 
-int32_t generate_test()
+tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int rs[], int cs[], int ss[], int32_t* templates[], uint8_t* pixelss[], uint8_t* edgemaps[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
 {
-	int32_t tcode;
+	int i, newstacksize, n1, n2;
 
-	int stop = 0;
+	tnode* root = 0;
 
 	//
-	while(!stop)
+	if(n==0)
 	{
-		int r1, c1, r2, c2;
+		printf("wat\n");
+		return 0;
+	}
 
-		//
-		tcode = mwcrand();
+	root = (tnode*)malloc(sizeof(tnode));
 
-		//
-		r1 = ((int8_t*)&tcode)[0];
-		c1 = ((int8_t*)&tcode)[1];
-		r2 = ((int8_t*)&tcode)[2];
-		c2 = ((int8_t*)&tcode)[3];
-
-		//
-		if(r1*r1+c1*c1<128*128 && r2*r2+c2*c2<128*128 && (r1-r2)*(r1-r2)+(c1-c2)*(c1-c2)<16*16)
-			stop = 1;
+	if(n == 1)
+	{
+		root->leaf = 1;
+		root->tag = inds[0];
+	}
+	else
+	{
+		root->leaf = 0;
+		root->tag = 0;
 	}
 
 	//
-	return tcode;
+	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, S2P, rs, cs, ss, pixelss, edgemaps, nrowss, ncolss, ldims, inds, n, THRESHOLD);
+
+	if(newstacksize-stacksize > maxnumtests/4)
+	{
+		root->template = (int32_t*)malloc((maxnumtests+1)*sizeof(int32_t));
+
+		//
+		root->template[0] = newstacksize - stacksize;
+
+		for(i=stacksize; i<newstacksize; ++i)
+			root->template[1+i-stacksize] = stack[i];
+	}
+	else
+		root->template = 0;
+
+	// split data: 0th and (n-1)st samples serve as "anchors"
+	SWAP(inds[0], inds[mwcrand()%n]);
+	SWAP(inds[n-1], inds[1+mwcrand()%(n-1)]);
+
+	n1 = partition_data(templates, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
+
+	n2 = n - n1;
+
+	//
+	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[0 ], n1);
+	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[n1], n2);
+
+	//
+	return root;
 }
 
-int grow_subtree(int32_t tcodes[], int nodeidx, int d, int maxd, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
-{
-	int i, nrands, n0, n1, Q;
-
-	//
-	if(d >= maxd)
-	{
-		///printf("%d ", n);
-
-		return 1;
-	}
-
-	if(n <= 1)
-	{
-		//
-		tcodes[nodeidx] = mwcrand();
-
-		//
-		grow_subtree(tcodes, 2*nodeidx+1, d+1, maxd, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
-		grow_subtree(tcodes, 2*nodeidx+2, d+1, maxd, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
-
-		return 1;
-	}
-
-	//
-	nrands = 128;
-
-	Q = 0;
-	tcodes[nodeidx] = mwcrand();
-
-	for(i=0; i<nrands; ++i)
-	{
-		int q;
-		int32_t tcode;
-
-		//
-		tcode = generate_test();
-
-		q = get_test_quality(tcode, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
-
-		//
-		if(q > Q)
-		{
-			Q = q;
-			tcodes[nodeidx] = tcode;
-		}
-	}
-
-	//
-	n0 = split_data(tcodes[nodeidx], rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
-
-	n1 = n - n0;
-
-	//
-	grow_subtree(tcodes, 2*nodeidx+1, d+1, maxd, rs, cs, ss, pixelss, nrowss, ncolss, ldims, &inds[0 ], n0);
-	grow_subtree(tcodes, 2*nodeidx+2, d+1, maxd, rs, cs, ss, pixelss, nrowss, ncolss, ldims, &inds[n0], n1);
-
-	//
-	return 1;
-}
-
-int32_t* grow_tree(int d, int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n)
+tnode* grow_tree(int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edgess[], int nrowss[], int ncolss[], int ldims[], int n)
 {
 	int i;
-
 	int* inds;
 
-	int32_t* tree;
+	int32_t** templates;
+
+	int maxstacksize;
+	int32_t* stack;
+
+	tnode* root;
 
 	//
 	inds = (int*)malloc(n*sizeof(int));
@@ -178,47 +284,35 @@ int32_t* grow_tree(int d, int rs[], int cs[], int ss[], uint8_t* pixelss[], int 
 	for(i=0; i<n; ++i)
 		inds[i] = i;
 
-	//
-	///tree = (int32_t*)malloc( (1<<(d+1))*sizeof(int32_t) );
-	tree = (int32_t*)malloc( (1<<d)*sizeof(int32_t) );
+	// learn templates ... (just for similarity estimation)
+	templates = (int32_t**)malloc(n*sizeof(int32_t*));
 
-	//
-	tree[0] = d;
-
-	if(!grow_subtree(&tree[1], 0, 0, d, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n))
+	for(i=0; i<n; ++i)
 	{
-		free(inds);
-		free(tree);
-
-		return 0;
+		templates[i] = (int32_t*)malloc((MAXNUMTESTS+1)*sizeof(int32_t));
+		learn_template(templates[i], MAXNUMTESTS, 1, S2P, rs[i], cs[i], ss[i], pixelss[i], edgess[i], nrowss[i], ncolss[i], ncolss[i], THRESHOLD);
 	}
-	else
-	{
-		free(inds);
 
-		return tree;
-	}
+	//
+	maxstacksize = n*MAXNUMTESTS;
+
+	stack = (int32_t*)malloc(maxstacksize*sizeof(int32_t));
+
+	//
+	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, rs, cs, ss, templates, pixelss, edgess, nrowss, ncolss, ldims, inds, n);
+
+	//
+	for(i=0; i<n; ++i)
+		free(templates[i]);
+	free(templates);
+
+	free(stack);
+
+	//
+	return root;
 }
 
-int get_tree_output(int32_t tree[], int threshold, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
+int get_tree_output(tnode* root, int threshold, int n0max, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
-	int d, tdepth, idx;
-	int32_t* tcodes;
-
-	//
-	tdepth = tree[0];
-	tcodes = &tree[1];
-
-	idx = 0;
-
-	for(d=0; d<tdepth; ++d)
-	{
-		if( bintest(tcodes[idx], threshold, r, c, s, pixels, nrows, ncols, ldim) )
-			idx = 2*idx + 2;
-		else
-			idx = 2*idx + 1;
-	}
-
-	//
-	return idx - ((1<<tdepth)-1);
+	return 0;
 }

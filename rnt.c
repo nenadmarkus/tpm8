@@ -18,11 +18,6 @@ int r0max = 3;
 
 // -----------------------
 
-#define MAXNUMTREES 128
-int numtrees = 0;
-int32_t* trees[MAXNUMTREES];
-int32_t* tluts[MAXNUMTREES];
-
 #define MAXNUMTEMPLATES 8192
 int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
@@ -118,7 +113,7 @@ uint32_t mwcrand()
 
 #include "bnt.c"
 #include "tme.c"
-#include "cng.c"
+///#include "cng.c"
 #include "ahe.c"
 
 float get_overlap(int r1, int c1, int s1, int r2, int c2, int s2)
@@ -293,40 +288,6 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 							qs[ndetections] = n1;
 
 							ptrs[ndetections] = templates[i];
-
-							++ndetections;
-						}
-					}
-				}
-				//*/
-
-				/*
-				for(i=0; i<numtrees; ++i)
-				{
-					lutidx = tluts[i][ get_tree_output(trees[i], THRESHOLD, r, c, s, pixels, nrows, ncols, ldim) ];
-
-					//
-					pass = match_template_at(templates[lutidx], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
-
-					if(pass)
-					{
-						int _n1;
-
-						match_template_at(smoothnesstemplates[lutidx], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
-
-						//if(_n1 > smoothnesstemplates[lutidx][0]/2)
-						//	pass = 0;
-					}
-
-					if(pass)
-					{
-						if(ndetections < maxndetections)
-						{
-							rs[ndetections] = r;
-							cs[ndetections] = c;
-							ss[ndetections] = s;
-
-							ptrs[ndetections] = templates[lutidx];
 
 							++ndetections;
 						}
@@ -570,17 +531,6 @@ int main(int argc, char* argv[])
 		for(i=0; i<numtemplateclusters; ++i)
 		{
 			LOAD_TEMPLATE(clustertemplates[i], file);
-		}
-
-		//
-		fread(&numtrees, sizeof(int), 1, file);
-
-		for(i=0; i<numtrees; ++i)
-		{
-			LOAD_TREE(trees[i], file);
-
-			tluts[i] = (int32_t*)malloc( (1<<trees[i][0])*sizeof(int32_t) );
-			fread(tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
 		}
 
 		//

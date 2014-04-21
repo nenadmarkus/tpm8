@@ -141,7 +141,6 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 
 #include "bnt.c"
 #include "tme.c"
-#include "tmc.c"
 #include "cng.c"
 
 void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
@@ -173,11 +172,6 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 	
 */
 
-#define MAXNUMTREES 128
-int numtrees = 0;
-int32_t* trees[MAXNUMTREES];
-int32_t* tluts[MAXNUMTREES];
-
 #define MAXNUMTEMPLATES 8192
 int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
@@ -186,45 +180,6 @@ int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 int numtemplateclusters = 0;
 int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
 
-typedef struct _tnode
-{
-#define NODETYPE_EMPTY 0
-#define NODETYPE_INNER 1
-#define NODETYPE_TERMI 2
-
-	int nodetype;
-
-	int32_t* templates[2];
-
-	struct _tnode* children[2];
-
-} tnode;
-
-tnode* _grow_tree(uint8_t* pixelss[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int n)
-{
-	return 0;
-}
-
-void cluster_templates(int32_t templates[], uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int n)
-{
-	int i, stop;
-
-	//
-	stop = 0;
-
-	while(!stop)
-	{
-		int found;
-
-		//
-		found = 0;
-
-		//for(i=0; i<n; ++i)
-		//	if(!)
-			
-	}
-}
-
 void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples, int tdepth)
 {
 	int i, n;
@@ -232,20 +187,6 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	float t;
 
 	uint8_t* edgess[2048];
-
-	//
-	t = getticks();
-
-	numtrees = 0;
-
-	for(n=0; n<numtrees; ++n)
-	{
-		trees[n] = grow_tree(tdepth, rs, cs, ss, pix, nrowss, ncolss, ncolss, numsamples);
-
-		tluts[n] = (int32_t*)calloc(1<<tdepth, sizeof(int32_t));
-	}
-
-	printf("%d samples clustered in %f [ms]\n", numsamples, 1000.0f*(getticks()-t));
 
 	//
 	t = getticks();
@@ -280,28 +221,16 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 			//
 			cvCanny(img, edges, 150, 225, 3);
-			//cvCanny(img, edges, 50, 100, 3);
 
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			///learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
-			learn_cluster_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, &rs[n], &cs[n], &ss[n], &pix[n], &edgemap, &nrowss[n], &ncolss[n], &ncolss[n], 1, THRESHOLD);
-
+			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
 
 			///draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
 
 			edgess[numtemplates] = edgemap;
-
-			//
-			for(i=0; i<numtrees; ++i)
-			{
-				lutidx = get_tree_output(trees[i], THRESHOLD, rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]);
-
-				tluts[i][lutidx] = numtemplates;
-			}
-			//printf("\n");
 
 			//
 			++numtemplates;
@@ -315,33 +244,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	}
 
 	//
-	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
-
-	//
-	//*
-	learn_cluster_template(clustertemplates[0], 32, 1, 1.5f*S2P, rs, cs, ss, pix, edgess, nrowss, ncolss, ncolss, numtemplates, THRESHOLD);
-	numtemplateclusters = 1;
-	//*/
-
-	/*
-	printf("%d\n", clustertemplates[0][0]);
-	for(i=0; i<numtemplates; ++i)
-	{
-		IplImage* tmpimg = cvCreateImageHeader(cvSize(ncolss[i], nrowss[i]), IPL_DEPTH_8U, 1);;
-		tmpimg->imageData = (char*)pix[i];
-		tmpimg->widthStep = ncolss[i];
-
-		//
-		//draw_template_pattern(tmpimg, templates[i], rs[i], cs[i], ss[i], pix[i], nrowss[i], ncolss[i], ncolss[i]);
-		draw_template_pattern(tmpimg, clustertemplates[0], rs[i], cs[i], ss[i], pix[i], nrowss[i], ncolss[i], ncolss[i]);
-		cvCircle(tmpimg, cvPoint(cs[i], rs[i]), ss[i]/2, CV_RGB(255, 255, 255), 2, 8, 0);
-		cvShowImage("...", tmpimg);
-		cvWaitKey(0);
-
-		//
-		cvReleaseImageHeader(&tmpimg);
-	}
-	*/
+	grow_tree(rs, cs, ss, pix, edgess, nrowss, ncolss, ncolss, numsamples);
 }
 
 /*
@@ -480,49 +383,8 @@ int main(int argc, char* argv[])
 			SAVE_TEMPLATE(clustertemplates[i], file);
 		}
 
-		//
-		fwrite(&numtrees, sizeof(int), 1, file);
-
-		for(i=0; i<numtrees; ++i)
-		{
-			SAVE_TREE(trees[i], file);
-			fwrite(tluts[i], sizeof(int32_t), 1<<trees[i][0], file);
-
-			///free(trees[i]);
-			///free(tluts[i]);
-		}
-
 		fclose(file);
 	}
-
-	//
-	/*
-	for(n=0; n<numtrees; ++n)
-	{
-		for(i=0; i<(1<<trees[n][0]); ++i)
-			printf("%d ", tluts[n][i]);
-		printf("\n------------------------------\n");
-	}
-	//*/
-
-	/*
-	int counts[1024];
-
-	for(i=0; i<numtemplates; ++i)
-		counts[i] = 0;
-
-	for(i=0; i<numtrees; ++i)
-	{
-		int j;
-
-		//
-		for(j=0; j<(1<<trees[i][0]); ++j)
-			++counts[ tluts[i][j] ];
-	}
-
-	for(i=0; i<numtemplates; ++i)
-		printf("%d\n", counts[i]);
-	//*/
 
 	//
 	return 0;
