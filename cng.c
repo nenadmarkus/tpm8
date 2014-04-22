@@ -1,4 +1,4 @@
-#define SWAP(a, b) (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
+#define SWAP(a, b) (((a) == (b)) || (((a) = (a)^(b)), ((b) = (a)^(b)), ((a) = (a)^(b))))
 
 typedef struct _tnode
 {
@@ -11,13 +11,63 @@ typedef struct _tnode
 
 } tnode;
 
+int save_tree_to_file(tnode* root, FILE* file)
+{
+	int32_t dummy;
+
+	fwrite(&root->leaf, sizeof(int), 1, file);
+	fwrite(&root->tag, sizeof(int), 1, file);
+
+	if(root->template)
+		SAVE_TEMPLATE(root->template, file);
+	else
+	{
+		dummy = 0;
+		fwrite(&dummy, sizeof(int32_t), 1, file);
+	}
+
+	if(!root->leaf)
+	{
+		return 
+			save_tree_to_file(root->subtree1, file)
+				|
+			save_tree_to_file(root->subtree2, file);
+	}
+	else
+		return 1;
+}
+
+tnode* load_tree_from_file(FILE* file)
+{
+	tnode* root = (tnode*)malloc(sizeof(tnode));
+
+	//
+	fread(&root->leaf, sizeof(int), 1, file);
+	fread(&root->tag, sizeof(int), 1, file);
+
+	//
+	root->template = (int32_t*)malloc((MAXNUMTESTS+1)*sizeof(int32_t));
+
+	LOAD_TEMPLATE(root->template, file);
+
+	//
+	if(!root->leaf)
+	{
+		root->subtree1 = load_tree_from_file(file);
+		root->subtree2 = load_tree_from_file(file);
+	}
+
+	//
+	return root;
+}
+
 int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, float s2p, int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edgemaps[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int threshold)
 {
 	int i, j, k, newstacksize, numiters, maxnumiters, p;
 
 	int8_t* stackbyteptr;
 
-	static int ers[128][8192], ecs[128][8192], ens[8192];
+	static int ers[8192][8192], ecs[8192][8192], ens[8192];
 
 	int r1, c1, r2, c2;
 
@@ -94,15 +144,21 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 			int nfails = 0;
 
 			for(k=0; k<n; ++k)
+			{
 				/*
 					stability requirements
 				*/
+
+				if(0==bintest(stack[newstacksize], threshold, rs[inds[k]], cs[inds[k]], ss[inds[k]], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
+					nfails += 1000;
+
 				for(i=0; i<32; ++i)
 					if( 0==bintest(stack[newstacksize], threshold, rs[inds[k]]+mwcrand()%(p/2+1)-(p/2), cs[inds[k]]+mwcrand()%(p/2+1)-(p/2), ss[inds[k]], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{
 						++nfails;
 						break;
 					}
+			}
 
 			if(nfails > 0)
 				ok = 0;
@@ -217,27 +273,15 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	//
 	if(n==0)
 	{
-		printf("wat\n");
 		return 0;
 	}
 
 	root = (tnode*)malloc(sizeof(tnode));
 
-	if(n == 1)
-	{
-		root->leaf = 1;
-		root->tag = inds[0];
-	}
-	else
-	{
-		root->leaf = 0;
-		root->tag = 0;
-	}
-
 	//
-	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, S2P, rs, cs, ss, pixelss, edgemaps, nrowss, ncolss, ldims, inds, n, THRESHOLD);
+	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, 1.5f*S2P, rs, cs, ss, pixelss, edgemaps, nrowss, ncolss, ldims, inds, n, THRESHOLD);
 
-	if(newstacksize-stacksize > maxnumtests/4)
+	if(newstacksize-stacksize > maxnumtests/2)
 	{
 		root->template = (int32_t*)malloc((maxnumtests+1)*sizeof(int32_t));
 
@@ -246,17 +290,48 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 
 		for(i=stacksize; i<newstacksize; ++i)
 			root->template[1+i-stacksize] = stack[i];
+
+		//
+		///printf("%d: %d, %d\n", depth, root->template[0], n);
 	}
 	else
 		root->template = 0;
 
-	// split data: 0th and (n-1)st samples serve as "anchors"
-	SWAP(inds[0], inds[mwcrand()%n]);
-	SWAP(inds[n-1], inds[1+mwcrand()%(n-1)]);
+	if(n == 1)
+	{
+		root->leaf = 1;
+		root->tag = inds[0];
 
-	n1 = partition_data(templates, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n);
+		root->subtree1 = 0;
+		root->subtree2 = 0;
+
+		//printf("%d %d\n", depth, newstacksize);
+
+		return root;
+	}
+	else
+	{
+		root->leaf = 0;
+		root->tag = 0;
+	}
+
+	// split data
+	i = mwcrand()%n;
+	SWAP(inds[0], inds[i]);
+
+	i = 1+mwcrand()%(n-1);
+	SWAP(inds[n-1], inds[i]);
+
+	n1 = partition_data(templates, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n); // 0th and (n-1)st samples serve as "anchors"
+
+	n1 = MAX(n1, 1); // hack?
 
 	n2 = n - n1;
+
+	if(n1 == 0 || n2 == 0)
+	{
+		printf("%d %d %d\n", n1, n2, depth);
+	}
 
 	//
 	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[0 ], n1);
@@ -312,7 +387,31 @@ tnode* grow_tree(int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edge
 	return root;
 }
 
+int numtags;
+int tags[8192];
+
 int get_tree_output(tnode* root, int threshold, int n0max, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
-	return 0;
+	if(root->template)
+	{
+		int n1;
+
+		if(!match_template_at(root->template, threshold, r, c, s, &n1, n0max, n0max, pixels, nrows, ncols, ldim))
+			return 0;
+	}
+
+	if(root->leaf)
+	{
+		tags[numtags] = root->tag;
+		++numtags;
+
+		return 1;
+	}
+	else
+	{
+		return
+			get_tree_output(root->subtree1, threshold, n0max, r, c, s, pixels, nrows, ncols, ldim)
+				|
+			get_tree_output(root->subtree2, threshold, n0max, r, c, s, pixels, nrows, ncols, ldim);
+	}
 }

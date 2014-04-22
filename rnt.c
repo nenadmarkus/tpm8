@@ -11,6 +11,7 @@
 
 #define MAXNUMTESTS (512)
 
+#define S2P (1.0f/20.0f)
 #define THRESHOLD 20
 
 int n0max = 2;
@@ -113,8 +114,10 @@ uint32_t mwcrand()
 
 #include "bnt.c"
 #include "tme.c"
-///#include "cng.c"
+#include "cng.c"
 #include "ahe.c"
+
+tnode* root = 0;
 
 float get_overlap(int r1, int c1, int s1, int r2, int c2, int s2)
 {
@@ -210,7 +213,6 @@ int cluster_detections(int a[], int rs[], int cs[], int ss[], int qs[], int n)
 
 				++k;
 			}
-
 		
 		///for(i=0; i<n; ++i)
 		///	if(a[i] == cc)
@@ -259,21 +261,20 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 				int lutidx, i, n1, pass;
 
 				//
-				//*
-				if(numtemplateclusters && !match_template_at(clustertemplates[0], THRESHOLD, r, c, s, &n1, 3, MAXNUMTESTS, pixels, nrows, ncols, ldim))
-					continue;
+				numtags = 0;
+				get_tree_output(root, THRESHOLD, 1, r, c, s, pixels, nrows, ncols, ldim);
 
-				for(i=0; i<numtemplates; ++i)
+				for(i=0; i<numtags; ++i)
 				{
-					pass = match_template_at(templates[i], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(templates[tags[i]], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
 						int _n1;
 
-						match_template_at(smoothnesstemplates[i], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+						match_template_at(smoothnesstemplates[tags[i]], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
-						if(_n1 > smoothnesstemplates[i][0]/2)
+						if(_n1 > smoothnesstemplates[tags[i]][0]/2)
 							pass = 0;
 					}
 
@@ -287,7 +288,7 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 							qs[ndetections] = n1;
 
-							ptrs[ndetections] = templates[i];
+							ptrs[ndetections] = templates[tags[i]];
 
 							++ndetections;
 						}
@@ -532,6 +533,9 @@ int main(int argc, char* argv[])
 		{
 			LOAD_TEMPLATE(clustertemplates[i], file);
 		}
+
+		//
+		root = load_tree_from_file(file);
 
 		//
 		fclose(file);

@@ -6,8 +6,8 @@
 #define MIN(a, b) ((a)<(b)?(a):(b))
 #endif
 
-#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file));
-#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), fread(&(t)[1], sizeof(int32_t), (t)[0], (file));
+#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
+#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
 
 float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
 {
@@ -124,7 +124,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				o = atan( gr/gc );
 			*/
 
-			o = getorient(ers[e], ecs[e], pixels, nrows, ncols, ldim, 4);
+			o = getorient(ers[e], ecs[e], pixels, nrows, ncols, ldim, 2);
 
 			//
 			r1 = MIN(MAX(r-s/2+1, ers[e]-sin(o)*p), r+s/2-1);
