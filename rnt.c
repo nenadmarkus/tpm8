@@ -262,7 +262,7 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 				//
 				numtags = 0;
-				get_tree_output(root, THRESHOLD, 1, r, c, s, pixels, nrows, ncols, ldim);
+				get_tree_output(root, THRESHOLD, n0max, r, c, s, pixels, nrows, ncols, ldim);
 
 				for(i=0; i<numtags; ++i)
 				{
@@ -385,13 +385,13 @@ void process_image(IplImage* img, int draw, int print)
 	float SCALEFACTOR = 1.1f;
 	float STRIDEFACTOR = 0.06f;
 
-	int MINSIZE = 75;
-	int MAXSIZE = 150;
+	int MINSIZE = 100;//75;
+	int MAXSIZE = 600;//150;
 
 	t = getticks();
 	ndetections = match_templates(rs, cs, ss, qs, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
 
-#define USE_CLUSTERING
+//#define USE_CLUSTERING
 #ifdef USE_CLUSTERING
 	ndetections = cluster_detections(a, rs, cs, ss, qs, ndetections);
 #endif
@@ -411,10 +411,10 @@ void process_image(IplImage* img, int draw, int print)
 	// if the flag is set, print the results to standard output
 	if(print)
 	{
-		///printf("%f [ms] ...\n", 1000.0f*t);
+		printf("%f [ms] ...\n", 1000.0f*t);
 
-		for(i=0; i<ndetections; ++i)
-			printf("%d %d %d %d\n", rs[i], cs[i], ss[i], qs[i]);
+		///for(i=0; i<ndetections; ++i)
+		///	printf("%d %d %d %d\n", rs[i], cs[i], ss[i], qs[i]);
 	}
 }
 
@@ -552,7 +552,7 @@ int main(int argc, char* argv[])
 
 		if(argc==3)
 		{
-			/*
+			//*
 			cvShowImage("rnt", img);
 			cvWaitKey(0);
 			//*/
