@@ -154,6 +154,9 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 					ok = 0;
 			}
 
+			if( 0==bintest(b, threshold, r, c, s, pixels, nrows, ncols, ldim) )
+				ok = 0;
+
 			for(i=0; i<32; ++i)
 				/*
 					stability requirements

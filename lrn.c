@@ -251,30 +251,6 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	t = getticks();
 	root = grow_tree(rs, cs, ss, pix, edgess, nrowss, ncolss, ncolss, numsamples);
 	printf("%f [ms] elapsed for clustering\n", 1000.0f*(getticks()-t));
-
-	t = getticks();
-	for(i=0; i<numsamples; ++i)
-	{
-		int j, fail;
-
-		numtags = 0;
-
-		get_tree_output(root, THRESHOLD, 0, rs[i], cs[i], ss[i], pix[i], nrowss[i], ncolss[i], ncolss[i]);
-
-		fail = 1;
-
-		///printf("%d:\n", i);
-		for(j=0; j<numtags; ++j)
-		{
-			///printf("\t%d\n", tags[j]);
-
-			if(tags[j] == i)
-				fail = 0;
-		}
-
-		///printf("\tfail=%d\n", fail);
-	}
-	printf("%f [ms]\n", 1000.0f*(getticks()-t));
 }
 
 /*

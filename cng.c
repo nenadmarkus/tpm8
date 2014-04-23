@@ -203,6 +203,10 @@ int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* 
 	int i, j;
 
 	//
+	if(n == 2)
+		return 1;
+
+	//
 	stop = 0;
 
 	i = 0;
@@ -272,9 +276,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 
 	//
 	if(n==0)
-	{
 		return 0;
-	}
 
 	root = (tnode*)malloc(sizeof(tnode));
 
@@ -327,11 +329,6 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	n1 = MAX(n1, 1); // hack?
 
 	n2 = n - n1;
-
-	if(n1 == 0 || n2 == 0)
-	{
-		printf("%d %d %d\n", n1, n2, depth);
-	}
 
 	//
 	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[0 ], n1);
