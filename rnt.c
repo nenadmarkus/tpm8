@@ -241,6 +241,8 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 	int s;
 	int ndetections;
 
+	int k = 0;
+
 	//
 	ndetections = 0;
 
@@ -263,7 +265,6 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 				//
 				//*
 				numtags = 0;
-				//get_tree_output(root, THRESHOLD, n0max, r, c, s, pixels, nrows, ncols, ldim);
 				get_tree_output(root, THRESHOLD, 3, r, c, s, pixels, nrows, ncols, ldim);
 
 				for(i=0; i<numtags; ++i)
