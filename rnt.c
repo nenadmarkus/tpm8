@@ -261,8 +261,10 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 				int lutidx, i, n1, pass;
 
 				//
+				//*
 				numtags = 0;
-				get_tree_output(root, THRESHOLD, n0max, r, c, s, pixels, nrows, ncols, ldim);
+				//get_tree_output(root, THRESHOLD, n0max, r, c, s, pixels, nrows, ncols, ldim);
+				get_tree_output(root, THRESHOLD, 3, r, c, s, pixels, nrows, ncols, ldim);
 
 				for(i=0; i<numtags; ++i)
 				{
@@ -289,6 +291,40 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 							qs[ndetections] = n1;
 
 							ptrs[ndetections] = templates[tags[i]];
+
+							++ndetections;
+						}
+					}
+				}
+				//*/
+
+				//
+				/*
+				for(i=0; i<numtemplates; ++i)
+				{
+					pass = match_template_at(templates[i], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
+
+					if(pass)
+					{
+						int _n1;
+
+						match_template_at(smoothnesstemplates[i], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+
+						if(_n1 > smoothnesstemplates[tags[i]][0]/2)
+							pass = 0;
+					}
+
+					if(pass)
+					{
+						if(ndetections < maxndetections)
+						{
+							rs[ndetections] = r;
+							cs[ndetections] = c;
+							ss[ndetections] = s;
+
+							qs[ndetections] = n1;
+
+							ptrs[ndetections] = templates[i];
 
 							++ndetections;
 						}

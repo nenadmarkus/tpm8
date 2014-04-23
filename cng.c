@@ -294,7 +294,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 			root->template[1+i-stacksize] = stack[i];
 
 		//
-		///printf("%d: %d, %d\n", depth, root->template[0], n);
+		///if(n>1)printf("%d: %d, %d\n", depth, root->template[0], n);
 	}
 	else
 		root->template = 0;

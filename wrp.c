@@ -82,82 +82,6 @@ float randuniform(float a, float b)
 	
 */
 
-/*
-void warp_template(IplImage* in, int r, int c, int s, float maxrotangle, IplImage* out)
-{
-	//
-	float tr = randuniform(-0.06f*s, +0.06f*s);
-	float tc = randuniform(-0.06f*s, +0.06f*s);
-
-	float theta = randuniform(-maxrotangle, +maxrotangle);
-	float phi = randuniform(-maxrotangle, +maxrotangle);
-
-	float s1 = randuniform(0.85f, 1.15f);
-	float s2 = randuniform(0.85f, 1.15f);
-
-	CvMat cvmat0, cvmat1, cvmat2, cvmat3, cvmat4, cvmat5, H;
-
-	//
-	float T0[3][3], T1[3][3], T2[3][3], T3[3][3], T4[3][3], T5[3][3];
-
-	//
-	T0[0][0] = 1.0f; T0[0][1] = 0.0f; T0[0][2] = -c + tc;
-	T0[1][0] = 0.0f; T0[1][1] = 1.0f; T0[1][2] = -r + tr;
-	T0[2][0] = 0.0f; T0[2][1] = 0.0f; T0[2][2] = 1.0f;
-
-	cvmat0 = cvMat(3, 3, CV_32FC1, &T0[0][0]);
-
-	//
-	T1[0][0] = cos(phi); T1[0][1] = -sin(phi); T1[0][2] = 0.0f;
-	T1[1][0] = sin(phi); T1[1][1] = cos(phi); T1[1][2] = 0.0f;
-	T1[2][0] = 0.0f; T1[2][1] = 0.0f; T1[2][2] = 1.0f;
-
-	cvmat1 = cvMat(3, 3, CV_32FC1, &T1[0][0]);
-
-	//
-	T2[0][0] = s1; T2[0][1] = 0.0f; T2[0][2] = 0.0f;
-	T2[1][0] = 0.0f; T2[1][1] = s2; T2[1][2] = 0.0f;
-	T2[2][0] = 0.0f; T2[2][1] = 0.0f; T2[2][2] = 1.0f;
-
-	cvmat2 = cvMat(3, 3, CV_32FC1, &T2[0][0]);
-
-	//
-	T3[0][0] = cos(-phi); T3[0][1] = -sin(-phi); T3[0][2] = 0.0f;
-	T3[1][0] = sin(-phi); T3[1][1] = cos(-phi); T3[1][2] = 0.0f;
-	T3[2][0] = 0.0f; T3[2][1] = 0.0f; T3[2][2] = 1.0f;
-	
-	cvmat3 = cvMat(3, 3, CV_32FC1, &T3[0][0]);
-
-	//
-	T4[0][0] = cos(theta); T4[0][1] = -sin(theta); T4[0][2] = 0.0f;
-	T4[1][0] = sin(theta); T4[1][1] = cos(theta); T4[1][2] = 0.0f;
-	T4[2][0] = 0.0f; T4[2][1] = 0.0f; T4[2][2] = 1.0f;
-
-	cvmat4 = cvMat(3, 3, CV_32FC1, &T4[0][0]);
-
-	//
-	T5[0][0] = 1.0f; T5[0][1] = 0.0f; T5[0][2] = out->width/2;
-	T5[1][0] = 0.0f; T5[1][1] = 1.0f; T5[1][2] = out->height/2;
-	T5[2][0] = 0.0f; T5[2][1] = 0.0f; T5[2][2] = 1.0f;
-
-	cvmat5 = cvMat(3, 3, CV_32FC1, &T5[0][0]);
-
-	//
-	H = cvMat(3, 3, CV_32FC1, &T0[0][0]);
-
-	cvMatMul(&cvmat1, &H, &H);
-	cvMatMul(&cvmat2, &H, &H);
-	cvMatMul(&cvmat3, &H, &H);
-	cvMatMul(&cvmat4, &H, &H);
-	cvMatMul(&cvmat5, &H, &H);
-
-	//
-	cvZero(out);
-
-	cvWarpPerspective(in, out, &H, CV_INTER_LINEAR, cvScalarAll(0));
-}
-*/
-
 void warp_template(IplImage* in, int r, int c, int s, float maxrotangle, IplImage* out)
 {
 	//
@@ -241,7 +165,8 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		warp_template(template, r, c, s, 3.14156, warps[n]);
+		///warp_template(template, r, c, s, 3.14156, warps[n]);
+		warp_template(template, r, c, s, 3.14156/9, warps[n]);
 
 		//
 		//cvShowImage("wrp", warps[n]); cvWaitKey(0);
