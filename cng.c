@@ -152,8 +152,8 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 				int T[6], Tp[6];
 
 				// compute the transformation matrix
-				T[0] = ss[k]; T[1] = 0; T[2] = _FIXED_POINT_SCALE_*rs[k];
-				T[3] = 0; T[4] = ss[k]; T[5] = _FIXED_POINT_SCALE_*cs[k];
+				T[0] = _FIXED_POINT_SCALE_*ss[k]; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*rs[k];
+				T[3] = 0; T[4] = _FIXED_POINT_SCALE_*ss[k]; T[5] = _SQR_FIXED_POINT_SCALE_*cs[k];
 
 				//
 				if(0==bintest(stack[newstacksize], threshold, T, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
@@ -161,8 +161,8 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 
 				for(i=0; i<32; ++i)
 				{
-					Tp[0] = ss[k]; Tp[1] = 0; Tp[2] = _FIXED_POINT_SCALE_*(rs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
-					Tp[3] = 0; Tp[4] = ss[k]; Tp[5] = _FIXED_POINT_SCALE_*(cs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
+					Tp[0] = _FIXED_POINT_SCALE_*ss[k]; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(rs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
+					Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*ss[k]; Tp[5] = _SQR_FIXED_POINT_SCALE_*(cs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
 
 					if( 0==bintest(stack[newstacksize], threshold, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{

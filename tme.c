@@ -95,8 +95,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	}
 
 	// compute the transformation matrix
-	T[0] = s; T[1] = 0; T[2] = _FIXED_POINT_SCALE_*r;
-	T[3] = 0; T[4] = s; T[5] = _FIXED_POINT_SCALE_*c;
+	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
+	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
 
 	//
 	n = 0;
@@ -162,8 +162,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				*/
 				int Tp[6];
 
-				Tp[0] = s; Tp[1] = 0; Tp[2] = _FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
-				Tp[3] = 0; Tp[4] = s; Tp[5] = _FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+				Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
+				Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
 
 				if( 0==bintest(b, threshold, Tp, pixels, nrows, ncols, ldim) )
 					ok = 0;
@@ -220,8 +220,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			{
 				int Tp[6];
 
-				Tp[0] = s; Tp[1] = 0; Tp[2] = _FIXED_POINT_SCALE_*(r-p+mwcrand()%(2*p));
-				Tp[3] = 0; Tp[4] = s; Tp[5] = _FIXED_POINT_SCALE_*(c-p+mwcrand()%(2*p));
+				Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r-p+mwcrand()%(2*p));
+				Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c-p+mwcrand()%(2*p));
 
 				if( 1==bintest(b, threshold, Tp, pixels, nrows, ncols, ldim) )
 					ok = 0;
@@ -255,8 +255,8 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 		return 1;
 
 	// compute the transformation matrix
-	T[0] = s; T[1] = 0; T[2] = _FIXED_POINT_SCALE_*r;
-	T[3] = 0; T[4] = s; T[5] = _FIXED_POINT_SCALE_*c;
+	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
+	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
 
 	//
 	n0 = 0;
