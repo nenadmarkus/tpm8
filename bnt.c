@@ -2,9 +2,9 @@
 #define ABS(x) ((x)>0?(x):(-(x)))
 #endif
 
-#define _BINTEST_COORDINATES_NORMALIZATION_ 255
+#define _FIXED_POINT_SCALE_ 256
 
-int bintest(int32_t tcode, int threshold, int* T, int normalization, uint8_t* pixels, int nrows, int ncols, int ldim)
+int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, int ncols, int ldim)
 {
 	int r1, c1, r2, c2;
 
@@ -14,18 +14,18 @@ int bintest(int32_t tcode, int threshold, int* T, int normalization, uint8_t* pi
 	p = (int8_t*)&tcode;
 
 	//
-	r1 = (T[0]*p[0] + T[1]*p[1] + T[2])/_BINTEST_COORDINATES_NORMALIZATION_;
-	c1 = (T[3]*p[0] + T[4]*p[1] + T[5])/_BINTEST_COORDINATES_NORMALIZATION_;
+	r1 = (T[0]*p[0] + T[1]*p[1] + T[2])/_FIXED_POINT_SCALE_;
+	c1 = (T[3]*p[0] + T[4]*p[1] + T[5])/_FIXED_POINT_SCALE_;
 
-	r2 = (T[0]*p[2] + T[1]*p[3] + T[2])/_BINTEST_COORDINATES_NORMALIZATION_;
-	c2 = (T[3]*p[2] + T[4]*p[3] + T[5])/_BINTEST_COORDINATES_NORMALIZATION_;
+	r2 = (T[0]*p[2] + T[1]*p[3] + T[2])/_FIXED_POINT_SCALE_;
+	c2 = (T[3]*p[2] + T[4]*p[3] + T[5])/_FIXED_POINT_SCALE_;
 
 	/*
-	r1 = (T[0]*p[0] + T[2])/_BINTEST_COORDINATES_NORMALIZATION_;
-	c1 = (T[4]*p[1] + T[5])/_BINTEST_COORDINATES_NORMALIZATION_;
+	r1 = (T[0]*p[0] + T[2])/_FIXED_POINT_SCALE_;
+	c1 = (T[4]*p[1] + T[5])/_FIXED_POINT_SCALE_;
 
-	r2 = (T[0]*p[2] + T[2])/_BINTEST_COORDINATES_NORMALIZATION_;
-	c2 = (T[4]*p[3] + T[5])/_BINTEST_COORDINATES_NORMALIZATION_;
+	r2 = (T[0]*p[2] + T[2])/_FIXED_POINT_SCALE_;
+	c2 = (T[4]*p[3] + T[5])/_FIXED_POINT_SCALE_;
 	*/
 
 	//
