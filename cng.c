@@ -126,10 +126,10 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 			c2 = MIN(MAX(cs[inds[k]]-ss[inds[k]]/2+1, ecs[k][e]+cos(o)*p), cs[inds[k]]+ss[inds[k]]/2-1);
 
 			//
-			stackbyteptr[4*newstacksize+0] = NORMALIZATION*(r1-rs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+1] = NORMALIZATION*(c1-cs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+2] = NORMALIZATION*(r2-rs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+3] = NORMALIZATION*(c2-cs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+0] = _BINTEST_COORDINATES_NORMALIZATION_*(r1-rs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+1] = _BINTEST_COORDINATES_NORMALIZATION_*(c1-cs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+2] = _BINTEST_COORDINATES_NORMALIZATION_*(r2-rs[inds[k]])/ss[inds[k]];
+			stackbyteptr[4*newstacksize+3] = _BINTEST_COORDINATES_NORMALIZATION_*(c2-cs[inds[k]])/ss[inds[k]];
 
 			//
 			int ok = 1;
@@ -149,15 +149,29 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 					stability requirements
 				*/
 
-				if(0==bintest(stack[newstacksize], threshold, rs[inds[k]], cs[inds[k]], ss[inds[k]], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
+				int T[6], Tp[6], norm;
+
+				// compute the transformation matrix
+				norm = _BINTEST_COORDINATES_NORMALIZATION_;
+
+				T[0] = ss[k]; T[1] = 0; T[2] = norm*rs[k];
+				T[3] = 0; T[4] = ss[k]; T[5] = norm*cs[k];
+
+				//
+				if(0==bintest(stack[newstacksize], threshold, T, norm, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
 					nfails += 1000;
 
 				for(i=0; i<32; ++i)
-					if( 0==bintest(stack[newstacksize], threshold, rs[inds[k]]+mwcrand()%(p/2+1)-(p/2), cs[inds[k]]+mwcrand()%(p/2+1)-(p/2), ss[inds[k]], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
+				{
+					Tp[0] = ss[k]; Tp[1] = 0; Tp[2] = norm*(rs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
+					Tp[3] = 0; Tp[4] = ss[k]; Tp[5] = norm*(cs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
+
+					if( 0==bintest(stack[newstacksize], threshold, Tp, norm, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{
 						++nfails;
 						break;
 					}
+				}
 			}
 
 			if(nfails > 0)

@@ -157,11 +157,11 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		int r1, c1, r2, c2, t;
 
 		//
-		r1 = (NORMALIZATION*r + ptr[4*i+0]*s)/NORMALIZATION;
-		c1 = (NORMALIZATION*c + ptr[4*i+1]*s)/NORMALIZATION;
+		r1 = (_BINTEST_COORDINATES_NORMALIZATION_*r + ptr[4*i+0]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
+		c1 = (_BINTEST_COORDINATES_NORMALIZATION_*c + ptr[4*i+1]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
 
-		r2 = (NORMALIZATION*r + ptr[4*i+2]*s)/NORMALIZATION;
-		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
+		r2 = (_BINTEST_COORDINATES_NORMALIZATION_*r + ptr[4*i+2]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
+		c2 = (_BINTEST_COORDINATES_NORMALIZATION_*c + ptr[4*i+3]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
 
 		//
 		cvLine(drawto, cvPoint(c1, r1), cvPoint(c2, r2), CV_RGB(255, 255, 255), 0, 8, 0);

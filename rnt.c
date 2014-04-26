@@ -269,7 +269,7 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 				for(i=0; i<numtags; ++i)
 				{
-					pass = match_template_at(templates[tags[i]], THRESHOLD, r, c, s, &n1, n0max, r0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(templates[tags[i]], THRESHOLD, r, c, s, &n1, n0max, n0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
@@ -356,11 +356,11 @@ void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, i
 		int r1, c1, r2, c2, t;
 
 		//
-		r1 = (NORMALIZATION*r + ptr[4*i+0]*s)/NORMALIZATION;
-		c1 = (NORMALIZATION*c + ptr[4*i+1]*s)/NORMALIZATION;
+		r1 = (_BINTEST_COORDINATES_NORMALIZATION_*r + ptr[4*i+0]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
+		c1 = (_BINTEST_COORDINATES_NORMALIZATION_*c + ptr[4*i+1]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
 
-		r2 = (NORMALIZATION*r + ptr[4*i+2]*s)/NORMALIZATION;
-		c2 = (NORMALIZATION*c + ptr[4*i+3]*s)/NORMALIZATION;
+		r2 = (_BINTEST_COORDINATES_NORMALIZATION_*r + ptr[4*i+2]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
+		c2 = (_BINTEST_COORDINATES_NORMALIZATION_*c + ptr[4*i+3]*s)/_BINTEST_COORDINATES_NORMALIZATION_;
 
 		//
 		cvCircle(drawto, cvPoint((c1+c2)/2, (r1+r2)/2), 1, CV_RGB(0, 255, 0), 2, 8, 0);

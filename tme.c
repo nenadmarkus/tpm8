@@ -70,6 +70,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 
 	int r1, c1, r2, c2;
 
+	int T[6], norm;
+
 	//
 	en = 0;
 
@@ -91,6 +93,12 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 		template[0] = 0;
 		return 0;
 	}
+
+	// compute the transformation matrix
+	norm = _BINTEST_COORDINATES_NORMALIZATION_;
+
+	T[0] = s; T[1] = 0; T[2] = norm*r;
+	T[3] = 0; T[4] = s; T[5] = norm*c;
 
 	//
 	n = 0;
@@ -114,16 +122,6 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			e = mwcrand()%en;
 
 			//
-			/*
-			gr = pixels[(ers[e]+1)*ldim+ecs[e]] - pixels[(ers[e]-1)*ldim+ecs[e]];
-			gc = pixels[ers[e]*ldim+(ecs[e]+1)] - pixels[ers[e]*ldim+(ecs[e]-1)];
-
-			if(gc == 0)
-				o = 1.57f;
-			else
-				o = atan( gr/gc );
-			*/
-
 			o = getorient(ers[e], ecs[e], pixels, nrows, ncols, ldim, 2);
 
 			//
@@ -134,15 +132,17 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			c2 = MIN(MAX(c-s/2+1, ecs[e]+cos(o)*p), c+s/2-1);
 
 			//
-			ptr[4*n+0] = NORMALIZATION*(r1-r)/s;
-			ptr[4*n+1] = NORMALIZATION*(c1-c)/s;
-			ptr[4*n+2] = NORMALIZATION*(r2-r)/s;
-			ptr[4*n+3] = NORMALIZATION*(c2-c)/s;
+			ptr[4*n+0] = _BINTEST_COORDINATES_NORMALIZATION_*(r1-r)/s;
+			ptr[4*n+1] = _BINTEST_COORDINATES_NORMALIZATION_*(c1-c)/s;
+			ptr[4*n+2] = _BINTEST_COORDINATES_NORMALIZATION_*(r2-r)/s;
+			ptr[4*n+3] = _BINTEST_COORDINATES_NORMALIZATION_*(c2-c)/s;
 
 			b = *(int32_t*)&ptr[4*n+0];
 
 			//
 			int ok = 1;
+
+			
 
 			for(i=0; i<n; ++i)
 			{
@@ -154,15 +154,22 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 					ok = 0;
 			}
 
-			if( 0==bintest(b, threshold, r, c, s, pixels, nrows, ncols, ldim) )
+			if( 0==bintest(b, threshold, T, norm, pixels, nrows, ncols, ldim) )
 				ok = 0;
 
 			for(i=0; i<32; ++i)
+			{
 				/*
 					stability requirements
 				*/
-				if( 0==bintest(b, threshold, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s, pixels, nrows, ncols, ldim) )
+				int Tp[6];
+
+				Tp[0] = s; Tp[1] = 0; Tp[2] = norm*(r+mwcrand()%(p/2+1)-(p/2));
+				Tp[3] = 0; Tp[4] = s; Tp[5] = norm*(c+mwcrand()%(p/2+1)-(p/2));
+
+				if( 0==bintest(b, threshold, Tp, norm, pixels, nrows, ncols, ldim) )
 					ok = 0;
+			}
 
 			//
 			if(ok)
@@ -201,10 +208,10 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				continue;
 
 			//
-			ptr[4*n+0] = NORMALIZATION*(r1-r)/s;
-			ptr[4*n+1] = NORMALIZATION*(c1-c)/s;
-			ptr[4*n+2] = NORMALIZATION*(r2-r)/s;
-			ptr[4*n+3] = NORMALIZATION*(c2-c)/s;
+			ptr[4*n+0] = _BINTEST_COORDINATES_NORMALIZATION_*(r1-r)/s;
+			ptr[4*n+1] = _BINTEST_COORDINATES_NORMALIZATION_*(c1-c)/s;
+			ptr[4*n+2] = _BINTEST_COORDINATES_NORMALIZATION_*(r2-r)/s;
+			ptr[4*n+3] = _BINTEST_COORDINATES_NORMALIZATION_*(c2-c)/s;
 
 			b = *(int32_t*)&ptr[4*n+0];
 
@@ -212,13 +219,18 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			int ok = 1;
 
 			for(i=0; i<32; ++i)
-				if( 1==bintest(b, threshold, r-p+mwcrand()%(2*p), c-p+mwcrand()%(2*p), s, pixels, nrows, ncols, ldim) )
+			{
+				int Tp[6];
+
+				Tp[0] = s; Tp[1] = 0; Tp[2] = norm*(r-p+mwcrand()%(2*p));
+				Tp[3] = 0; Tp[4] = s; Tp[5] = norm*(c-p+mwcrand()%(2*p));
+
+				if( 1==bintest(b, threshold, Tp, norm, pixels, nrows, ncols, ldim) )
 					ok = 0;
+			}
 
 			if(ok)
-			{
 				++n;
-			}
 
 			//
 			++numiters;
@@ -238,9 +250,17 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 
 	int8_t* ptr;
 
+	int T[6], norm;
+
 	//
 	if(!template[0])
 		return 1;
+
+	// compute the transformation matrix
+	norm = _BINTEST_COORDINATES_NORMALIZATION_;
+
+	T[0] = s; T[1] = 0; T[2] = norm*r;
+	T[3] = 0; T[4] = s; T[5] = norm*c;
 
 	//
 	n0 = 0;
@@ -250,7 +270,7 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 
 	for(i=0; i<template[0]; ++i)
 	{
-		if( !bintest(template[i+1], threshold, r, c, s, pixels, nrows, ncols, ldim) )
+		if( !bintest(template[i+1], threshold, T, norm, pixels, nrows, ncols, ldim) )
 		{
 			++n0;
 			++r0;

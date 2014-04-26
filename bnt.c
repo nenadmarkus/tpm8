@@ -2,23 +2,23 @@
 #define ABS(x) ((x)>0?(x):(-(x)))
 #endif
 
-#define NORMALIZATION 255
+#define _BINTEST_COORDINATES_NORMALIZATION_ 255
 
-int bintest(int32_t tcode, int threshold, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
+int bintest(int32_t tcode, int threshold, int T[], int normalization, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
 	int r1, c1, r2, c2;
 
-	int8_t* ptr;
+	int8_t* p;
 
 	//
-	ptr = (int8_t*)&tcode;
+	p = (int8_t*)&tcode;
 
 	//
-	r1 = (NORMALIZATION*r + ptr[0]*s)/NORMALIZATION;
-	c1 = (NORMALIZATION*c + ptr[1]*s)/NORMALIZATION;
+	r1 = (T[0]*p[0] + T[1]*p[1] + T[2])/normalization;
+	c1 = (T[3]*p[0] + T[4]*p[1] + T[5])/normalization;
 
-	r2 = (NORMALIZATION*r + ptr[2]*s)/NORMALIZATION;
-	c2 = (NORMALIZATION*c + ptr[3]*s)/NORMALIZATION;
+	r2 = (T[0]*p[2] + T[1]*p[3] + T[2])/normalization;
+	c2 = (T[3]*p[2] + T[4]*p[3] + T[5])/normalization;
 
 	//
 #ifndef USE_RGB
