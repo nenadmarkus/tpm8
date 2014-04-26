@@ -3,6 +3,7 @@
 #endif
 
 #define _FIXED_POINT_SCALE_ 256
+#define _SQR_FIXED_POINT_SCALE_ (_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_)
 
 int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, int ncols, int ldim)
 {
@@ -19,14 +20,6 @@ int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, in
 
 	r2 = (T[0]*p[2] + T[1]*p[3] + T[2])/_FIXED_POINT_SCALE_;
 	c2 = (T[3]*p[2] + T[4]*p[3] + T[5])/_FIXED_POINT_SCALE_;
-
-	/*
-	r1 = (T[0]*p[0] + T[2])/_FIXED_POINT_SCALE_;
-	c1 = (T[4]*p[1] + T[5])/_FIXED_POINT_SCALE_;
-
-	r2 = (T[0]*p[2] + T[2])/_FIXED_POINT_SCALE_;
-	c2 = (T[4]*p[3] + T[5])/_FIXED_POINT_SCALE_;
-	*/
 
 	//
 #ifndef USE_RGB
