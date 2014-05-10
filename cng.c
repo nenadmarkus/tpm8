@@ -116,7 +116,7 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 			p = (int)( ss[inds[k]]*s2p );
 
 			//
-			o = getorient(ers[k][e], ecs[k][e], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]], 3);
+			o = get_area_orientation(ers[k][e], ecs[k][e], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]], 3);
 
 			//
 			r1 = MIN(MAX(rs[inds[k]]-ss[inds[k]]/2+1, ers[k][e]-sin(o)*p), rs[inds[k]]+ss[inds[k]]/2-1);

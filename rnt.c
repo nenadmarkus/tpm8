@@ -450,8 +450,8 @@ void process_image(IplImage* img, int draw, int print)
 	{
 		printf("%f [ms] ...\n", 1000.0f*t);
 
-		///for(i=0; i<ndetections; ++i)
-		///	printf("%d %d %d %d\n", rs[i], cs[i], ss[i], qs[i]);
+		//for(i=0; i<ndetections; ++i)
+		//	printf("%d %d %d %d\n", rs[i], cs[i], ss[i], qs[i]);
 	}
 }
 

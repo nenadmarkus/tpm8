@@ -9,7 +9,7 @@
 #define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
 #define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
 
-float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
+float get_area_orientation(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
 {
 	int r1, r2, c1, c2, cnt;
 	float norm, vdiff;
@@ -40,7 +40,7 @@ float getorient(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, 
 						continue;
 
 					vdiff = pixels[(r+r1)*ldim+(c+c1)] - pixels[(r+r2)*ldim+(c+c2)];
-				
+
 					gr += vdiff*(r1-r2)/norm;
 					gc += vdiff*(c1-c2)/norm;
 
@@ -120,7 +120,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			e = mwcrand()%en;
 
 			//
-			o = getorient(ers[e], ecs[e], pixels, nrows, ncols, ldim, 2);
+			o = get_area_orientation(ers[e], ecs[e], pixels, nrows, ncols, ldim, 2);
 
 			//
 			r1 = MIN(MAX(r-s/2+1, ers[e]-sin(o)*p), r+s/2-1);

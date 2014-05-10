@@ -82,7 +82,7 @@ float randuniform(float a, float b)
 	
 */
 
-void warp_template(IplImage* in, int r, int c, int s, float maxrotangle, IplImage* out)
+void warp_template(IplImage* in, float maxrotangle, IplImage* out)
 {
 	//
 	float phi = randuniform(-maxrotangle, +maxrotangle);
@@ -90,17 +90,15 @@ void warp_template(IplImage* in, int r, int c, int s, float maxrotangle, IplImag
 	float s1 = randuniform(0.85f, 1.15f);
 	float s2 = randuniform(0.85f, 1.15f);
 
-	CvMat cvmat0, cvmat1, cvmat2, cvmat3, H;
+	CvMat cvmat1, cvmat2, cvmat3, H;
 
 	//
 	float T0[3][3], T1[3][3], T2[3][3], T3[3][3];
 
 	//
-	T0[0][0] = 1.0f; T0[0][1] = 0.0f; T0[0][2] = -c;
-	T0[1][0] = 0.0f; T0[1][1] = 1.0f; T0[1][2] = -r;
+	T0[0][0] = 1.0f; T0[0][1] = 0.0f; T0[0][2] = -out->width/2;
+	T0[1][0] = 0.0f; T0[1][1] = 1.0f; T0[1][2] = -out->height/2;
 	T0[2][0] = 0.0f; T0[2][1] = 0.0f; T0[2][2] = 1.0f;
-
-	cvmat0 = cvMat(3, 3, CV_32FC1, &T0[0][0]);
 
 	//
 	T1[0][0] = cos(phi); T1[0][1] = -sin(phi); T1[0][2] = 0.0f;
@@ -165,11 +163,11 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		///warp_template(template, r, c, s, 3.14156, warps[n]);
-		warp_template(template, r, c, s, 3.14156/9, warps[n]);
+		///warp_template(template, 3.14156, warps[n]);
+		warp_template(template, 3.14156/9, warps[n]);
 
 		//
-		//cvShowImage("wrp", warps[n]); cvWaitKey(0);
+		///cvShowImage("wrp", warps[n]); cvWaitKey(0);
 
 		//
 		++n;
