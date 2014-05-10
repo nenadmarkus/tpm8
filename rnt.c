@@ -7,8 +7,6 @@
 	prameters ...
 */
 
-#define USE_CLAHE
-
 #define MAXNUMTESTS (512)
 
 #define S2P (1.0f/20.0f)
@@ -411,12 +409,6 @@ void process_image(IplImage* img, int draw, int print)
 	nrows = toprocess->height;
 	ncols = toprocess->width;
 	ldim = toprocess->widthStep;
-
-#ifndef USE_RGB
-#ifdef USE_CLAHE
-	CLAHE(pixels, pixels, nrows, ncols, ldim, 8, 8, 3);
-#endif
-#endif
 
 	//
 	float SCALEFACTOR = 1.1f;
