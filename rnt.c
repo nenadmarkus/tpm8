@@ -113,7 +113,6 @@ uint32_t mwcrand()
 #include "bnt.c"
 #include "tme.c"
 #include "cng.c"
-#include "ahe.c"
 
 tnode* root = 0;
 
@@ -258,22 +257,26 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 		for(r=s/2+1; r<=nrows-s/2-1; r+=dr)
 			for(c=s/2+1; c<=ncols-s/2-1; c+=dc)
 			{
-				int lutidx, i, n1, pass;
+				int lutidx, i, n1, pass, T[6];
 
 				//
 				//*
+				//
+				compute_rcs_transformation(T, r, c, s);
+
+				//
 				numtags = 0;
-				get_tree_output(root, THRESHOLD, 3, r, c, s, pixels, nrows, ncols, ldim);
+				get_tree_output(root, THRESHOLD, 3, T, pixels, nrows, ncols, ldim);
 
 				for(i=0; i<numtags; ++i)
 				{
-					pass = match_template_at(templates[tags[i]], THRESHOLD, r, c, s, &n1, n0max, n0max, pixels, nrows, ncols, ldim);
+					pass = match_template_at(templates[tags[i]], THRESHOLD, T, &n1, n0max, pixels, nrows, ncols, ldim);
 
 					if(pass)
 					{
 						int _n1;
 
-						match_template_at(smoothnesstemplates[tags[i]], THRESHOLD, r, c, s, &_n1, MAXNUMTESTS, MAXNUMTESTS, pixels, nrows, ncols, ldim);
+						match_template_at(smoothnesstemplates[tags[i]], THRESHOLD, T, &_n1, MAXNUMTESTS, pixels, nrows, ncols, ldim);
 
 						if(_n1 > smoothnesstemplates[tags[i]][0]/2)
 							pass = 0;

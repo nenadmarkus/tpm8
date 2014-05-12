@@ -61,40 +61,12 @@ tnode* load_tree_from_file(FILE* file)
 	return root;
 }
 
-int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, float s2p, int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edgemaps[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int threshold)
+int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize)
 {
-	int i, j, k, newstacksize, numiters, maxnumiters, p;
-
-	int8_t* stackbyteptr;
-
-	static int ers[8192][8192], ecs[8192][8192], ens[8192];
-
-	int r1, c1, r2, c2;
-
-	//
-	for(k=0; k<n; ++k)
-	{
-		ens[k] = 0;
-
-		//
-		for(i=rs[inds[k]]-ss[inds[k]]/2; i<rs[inds[k]]+ss[inds[k]]/2; ++i)
-			for(j=cs[inds[k]]-ss[inds[k]]/2; j<cs[inds[k]]+ss[inds[k]]/2; ++j)
-				if(edgemaps[inds[k]][i*ldims[inds[k]]+j])
-				{
-					if( (i-rs[inds[k]])*(i-rs[inds[k]]) + (j-cs[inds[k]])*(j-cs[inds[k]]) < (ss[inds[k]]-2)*(ss[inds[k]]-2)/4 )
-					{
-						ers[k][ens[k]] = i;
-						ecs[k][ens[k]] = j;
-
-						++ens[k];
-					}
-				}
-	}
+	int i, j, k, newstacksize, numiters, maxnumiters;
 
 	//
 	newstacksize = stacksize;
-
-	stackbyteptr = (int8_t*)&stack[0];
 
 	if(1)
 	{
@@ -104,32 +76,28 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 
 		while(newstacksize<maxstacksize && numiters<maxnumiters)
 		{
-			float o;
+			//
+			k = mwcrand()%tcodepoolsize;
 
-			int e;
+			stack[newstacksize] = tcodepool[k];
 
 			//
-			k = mwcrand()%n;
-			e = mwcrand()%ens[k];
-
-			//
-			p = (int)( ss[inds[k]]*s2p );
-
-			//
+			/*
 			o = get_area_orientation(ers[k][e], ecs[k][e], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]], 3);
 
-			//
-			r1 = MIN(MAX(rs[inds[k]]-ss[inds[k]]/2+1, ers[k][e]-sin(o)*p), rs[inds[k]]+ss[inds[k]]/2-1);
-			c1 = MIN(MAX(cs[inds[k]]-ss[inds[k]]/2+1, ecs[k][e]-cos(o)*p), cs[inds[k]]+ss[inds[k]]/2-1);
+			r1 = ers[k][e]-sin(o)*p;
+			c1 = ecs[k][e]-cos(o)*p;
 
-			r2 = MIN(MAX(rs[inds[k]]-ss[inds[k]]/2+1, ers[k][e]+sin(o)*p), rs[inds[k]]+ss[inds[k]]/2-1);
-			c2 = MIN(MAX(cs[inds[k]]-ss[inds[k]]/2+1, ecs[k][e]+cos(o)*p), cs[inds[k]]+ss[inds[k]]/2-1);
+			r2 = ers[k][e]+sin(o)*p;
+			c2 = ecs[k][e]+cos(o)*p;
 
-			//
-			stackbyteptr[4*newstacksize+0] = _FIXED_POINT_SCALE_*(r1-rs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+1] = _FIXED_POINT_SCALE_*(c1-cs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+2] = _FIXED_POINT_SCALE_*(r2-rs[inds[k]])/ss[inds[k]];
-			stackbyteptr[4*newstacksize+3] = _FIXED_POINT_SCALE_*(c2-cs[inds[k]])/ss[inds[k]];
+			int det = Ts[k][0]*Ts[k][4] - Ts[k][1]*Ts[k][3];
+
+			stackbyteptr[4*newstacksize+0] = ( +(_SQR_FIXED_POINT_SCALE_*r1-Ts[k][2])*Ts[k][4] + -(_SQR_FIXED_POINT_SCALE_*c1-Ts[k][5])*Ts[k][1] )/det;
+			stackbyteptr[4*newstacksize+1] = ( -(_SQR_FIXED_POINT_SCALE_*r1-Ts[k][2])*Ts[k][3] + +(_SQR_FIXED_POINT_SCALE_*c1-Ts[k][5])*Ts[k][0] )/det;
+			stackbyteptr[4*newstacksize+2] = ( +(_SQR_FIXED_POINT_SCALE_*r2-Ts[k][2])*Ts[k][4] + -(_SQR_FIXED_POINT_SCALE_*c2-Ts[k][5])*Ts[k][1] )/det;
+			stackbyteptr[4*newstacksize+3] = ( -(_SQR_FIXED_POINT_SCALE_*r2-Ts[k][2])*Ts[k][3] + +(_SQR_FIXED_POINT_SCALE_*c2-Ts[k][5])*Ts[k][0] )/det;
+			*/
 
 			//
 			int ok = 1;
@@ -149,22 +117,20 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 					stability requirements
 				*/
 
-				int T[6], Tp[6];
-
-				// compute the transformation matrix
-				T[0] = _FIXED_POINT_SCALE_*ss[k]; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*rs[k];
-				T[3] = 0; T[4] = _FIXED_POINT_SCALE_*ss[k]; T[5] = _SQR_FIXED_POINT_SCALE_*cs[k];
+				int* T = Ts[k];
 
 				//
-				if(0==bintest(stack[newstacksize], threshold, T, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
+				if(0==bintest(stack[newstacksize], THRESHOLD, T, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
 					nfails += 1000;
 
 				for(i=0; i<32; ++i)
 				{
-					Tp[0] = _FIXED_POINT_SCALE_*ss[k]; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(rs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
-					Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*ss[k]; Tp[5] = _SQR_FIXED_POINT_SCALE_*(cs[inds[k]]+mwcrand()%(p/2+1)-(p/2));
+					int Tp[6];
 
-					if( 0==bintest(stack[newstacksize], threshold, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
+					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2];
+					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5];
+
+					if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{
 						++nfails;
 						break;
@@ -190,8 +156,8 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, flo
 
 float get_similarity
 	(
-		int32_t t1[], int r1, int c1, int s1, uint8_t p1[], int nrows1, int ncols1, int ldim1,
-		int32_t t2[], int r2, int c2, int s2, uint8_t p2[], int nrows2, int ncols2, int ldim2
+		int32_t t1[], int* T1, uint8_t p1[], int nrows1, int ncols1, int ldim1,
+		int32_t t2[], int* T2, uint8_t p2[], int nrows2, int ncols2, int ldim2
 	)
 {
 	int n1, n2;
@@ -201,15 +167,15 @@ float get_similarity
 	n1 = t1[0];
 	n2 = t2[0];
 
-	//
-	match_template_at(t1, THRESHOLD, r2, c2, s2, &s12, n1, n1, p2, nrows2, ncols2, ldim2);
-	match_template_at(t2, THRESHOLD, r1, c1, s1, &s21, n2, n2, p1, nrows1, ncols1, ldim1);
+	// compute the transformation matrices
+	///match_template_at(t1, THRESHOLD, T2, &s12, n1, n1, p2, nrows2, ncols2, ldim2);
+	///match_template_at(t2, THRESHOLD, T1, &s21, n2, n2, p1, nrows1, ncols1, ldim1);
 
 	//
 	return ( s12/(float)n1 + s21/(float)n2 )/2.0f;
 }
 
-int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
+int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
 {
 	int stop;
 	int i, j;
@@ -231,14 +197,14 @@ int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* 
 		(
 			get_similarity
 			(
-				templates[inds[0]], rs[inds[0]], cs[inds[0]], ss[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
-				templates[inds[i]], rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]
+				templates[inds[0]], Ts[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
+				templates[inds[i]], Ts[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]
 			)
 				>=
 			get_similarity
 			(
-				templates[inds[i]], rs[inds[i]], cs[inds[i]], ss[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]],
-				templates[inds[n-1]], rs[inds[n-1]], cs[inds[n-1]], ss[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
+				templates[inds[i]], Ts[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]],
+				templates[inds[n-1]], Ts[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
 			)
 		)
 		{
@@ -252,14 +218,14 @@ int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* 
 		(
 			get_similarity
 			(
-				templates[inds[0]], rs[inds[0]], cs[inds[0]], ss[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
-				templates[inds[j]], rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]
+				templates[inds[0]], Ts[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
+				templates[inds[j]], Ts[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]]
 			)
 				<=
 			get_similarity
 			(
-				templates[inds[j]], rs[inds[j]], cs[inds[j]], ss[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]],
-				templates[inds[n-1]], rs[inds[n-1]], cs[inds[n-1]], ss[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
+				templates[inds[j]], Ts[inds[j]], pixelss[inds[j]], nrowss[inds[j]], ncolss[inds[j]], ldims[inds[j]],
+				templates[inds[n-1]], Ts[inds[n-1]], pixelss[inds[n-1]], nrowss[inds[n-1]], ncolss[inds[n-1]], ldims[inds[n-1]]
 			)
 		)
 		{
@@ -280,7 +246,7 @@ int partition_data(int32_t* templates[], int rs[], int cs[], int ss[], uint8_t* 
 	return i; // ?
 }
 
-tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int rs[], int cs[], int ss[], int32_t* templates[], uint8_t* pixelss[], uint8_t* edgemaps[], int nrowss[], int ncolss[], int ldims[], int inds[], int n)
+tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize)
 {
 	int i, newstacksize, n1, n2;
 
@@ -293,7 +259,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	root = (tnode*)malloc(sizeof(tnode));
 
 	//
-	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, 1.5f*S2P, rs, cs, ss, pixelss, edgemaps, nrowss, ncolss, ldims, inds, n, THRESHOLD);
+	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize);
 
 	if(newstacksize-stacksize > maxnumtests/2)
 	{
@@ -336,26 +302,24 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	i = 1+mwcrand()%(n-1);
 	SWAP(inds[n-1], inds[i]);
 
-	n1 = partition_data(templates, rs, cs, ss, pixelss, nrowss, ncolss, ldims, inds, n); // 0th and (n-1)st samples serve as "anchors"
+	n1 = partition_data(templates, Ts, pixelss, nrowss, ncolss, ldims, inds, n); // 0th and (n-1)st samples serve as "anchors"
 
 	n1 = MAX(n1, 1); // hack?
 
 	n2 = n - n1;
 
 	//
-	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[0 ], n1);
-	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, rs, cs, ss, templates, pixelss, edgemaps, nrowss, ncolss, ldims, &inds[n1], n2);
+	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize);
+	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize);
 
 	//
 	return root;
 }
 
-tnode* grow_tree(int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edgess[], int nrowss[], int ncolss[], int ldims[], int n)
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize)
 {
 	int i;
 	int* inds;
-
-	int32_t** templates;
 
 	int maxstacksize;
 	int32_t* stack;
@@ -368,28 +332,15 @@ tnode* grow_tree(int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edge
 	for(i=0; i<n; ++i)
 		inds[i] = i;
 
-	// learn templates ... (just for similarity estimation)
-	templates = (int32_t**)malloc(n*sizeof(int32_t*));
-
-	for(i=0; i<n; ++i)
-	{
-		templates[i] = (int32_t*)malloc((MAXNUMTESTS+1)*sizeof(int32_t));
-		learn_template(templates[i], MAXNUMTESTS, 1, S2P, rs[i], cs[i], ss[i], pixelss[i], edgess[i], nrowss[i], ncolss[i], ncolss[i], THRESHOLD);
-	}
-
 	//
 	maxstacksize = n*MAXNUMTESTS;
 
 	stack = (int32_t*)malloc(maxstacksize*sizeof(int32_t));
 
 	//
-	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, rs, cs, ss, templates, pixelss, edgess, nrowss, ncolss, ldims, inds, n);
+	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize);
 
 	//
-	for(i=0; i<n; ++i)
-		free(templates[i]);
-	free(templates);
-
 	free(stack);
 
 	//
@@ -399,13 +350,13 @@ tnode* grow_tree(int rs[], int cs[], int ss[], uint8_t* pixelss[], uint8_t* edge
 int numtags;
 int tags[8192];
 
-int get_tree_output(tnode* root, int threshold, int n0max, int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
+int get_tree_output(tnode* root, int threshold, int n0max, int* T, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
 	if(root->template)
 	{
 		int n1;
 
-		if(!match_template_at(root->template, threshold, r, c, s, &n1, n0max, n0max, pixels, nrows, ncols, ldim))
+		if(!match_template_at(root->template, threshold, T, &n1, n0max, pixels, nrows, ncols, ldim))
 			return 0;
 	}
 
@@ -419,8 +370,8 @@ int get_tree_output(tnode* root, int threshold, int n0max, int r, int c, int s, 
 	else
 	{
 		return
-			get_tree_output(root->subtree1, threshold, n0max, r, c, s, pixels, nrows, ncols, ldim)
+			get_tree_output(root->subtree1, threshold, n0max, T, pixels, nrows, ncols, ldim)
 				|
-			get_tree_output(root->subtree2, threshold, n0max, r, c, s, pixels, nrows, ncols, ldim);
+			get_tree_output(root->subtree2, threshold, n0max, T, pixels, nrows, ncols, ldim);
 	}
 }

@@ -29,6 +29,12 @@ int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, in
 #endif
 }
 
+void compute_rcs_transformation(int* T, int r, int c, int s)
+{
+	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
+	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+}
+
 int get_bintest_proximity(int32_t t1, int32_t t2)
 {
 	int r1, c1, r2, c2;
