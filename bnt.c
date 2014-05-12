@@ -25,7 +25,12 @@ int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, in
 #ifndef USE_RGB
 	return ( ABS(pixels[r1*ldim+c1]-pixels[r2*ldim+c2]) > threshold );
 #else
-	return (ABS(pixels[r1*ldim+3*c1+0]-pixels[r2*ldim+3*c2+0])>threshold)||(ABS(pixels[r1*ldim+3*c1+1]-pixels[r2*ldim+3*c2+1])>threshold)||(ABS(pixels[r1*ldim+3*c1+2]-pixels[r2*ldim+3*c2+2])>threshold);
+	return
+	(
+		(ABS(pixels[r1*ldim+3*c1+0]-pixels[r2*ldim+3*c2+0])>threshold)||
+		(ABS(pixels[r1*ldim+3*c1+1]-pixels[r2*ldim+3*c2+1])>threshold)||
+		(ABS(pixels[r1*ldim+3*c1+2]-pixels[r2*ldim+3*c2+2])>threshold)
+	);
 #endif
 }
 

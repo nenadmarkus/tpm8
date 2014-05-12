@@ -61,7 +61,7 @@ tnode* load_tree_from_file(FILE* file)
 	return root;
 }
 
-int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
+int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i, j, k, newstacksize, numiters, maxnumiters;
 
@@ -238,7 +238,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	root = (tnode*)malloc(sizeof(tnode));
 
 	//
-	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
+	newstacksize = learn_joint_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
 	if(newstacksize-stacksize > maxnumtests/2)
 	{
@@ -326,10 +326,7 @@ tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss
 	return root;
 }
 
-int numtags;
-int tags[8192];
-
-int get_tree_output(tnode* root, int threshold, int n0max, int* T, uint8_t pixels[], int nrows, int ncols, int ldim)
+int get_tree_output(tnode* root, int threshold, int n0max, int* T, uint8_t pixels[], int nrows, int ncols, int ldim, int tags[], int* n)
 {
 	if(root->template)
 	{
@@ -341,16 +338,16 @@ int get_tree_output(tnode* root, int threshold, int n0max, int* T, uint8_t pixel
 
 	if(root->leaf)
 	{
-		tags[numtags] = root->tag;
-		++numtags;
+		tags[*n] = root->tag;
+		++*n;
 
 		return 1;
 	}
 	else
 	{
 		return
-			get_tree_output(root->subtree1, threshold, n0max, T, pixels, nrows, ncols, ldim)
+			get_tree_output(root->subtree1, threshold, n0max, T, pixels, nrows, ncols, ldim, tags, n)
 				|
-			get_tree_output(root->subtree2, threshold, n0max, T, pixels, nrows, ncols, ldim);
+			get_tree_output(root->subtree2, threshold, n0max, T, pixels, nrows, ncols, ldim, tags, n);
 	}
 }
