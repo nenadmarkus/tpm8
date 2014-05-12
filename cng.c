@@ -68,86 +68,65 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int
 	//
 	newstacksize = stacksize;
 
-	if(1)
+	maxnumiters = 2048;
+
+	numiters = 0;
+
+	while(newstacksize<maxstacksize && numiters<maxnumiters)
 	{
-		maxnumiters = 2048;
+		//
+		k = mwcrand()%tcodepoolsize;
 
-		numiters = 0;
+		stack[newstacksize] = tcodepool[k];
 
-		while(newstacksize<maxstacksize && numiters<maxnumiters)
-		{
-			//
-			k = mwcrand()%tcodepoolsize;
+		//
+		int ok = 1;
 
-			stack[newstacksize] = tcodepool[k];
-
-			//
+		for(i=0; i<newstacksize; ++i)
 			/*
-			o = get_area_orientation(ers[k][e], ecs[k][e], pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]], 3);
-
-			r1 = ers[k][e]-sin(o)*p;
-			c1 = ecs[k][e]-cos(o)*p;
-
-			r2 = ers[k][e]+sin(o)*p;
-			c2 = ecs[k][e]+cos(o)*p;
-
-			int det = Ts[k][0]*Ts[k][4] - Ts[k][1]*Ts[k][3];
-
-			stackbyteptr[4*newstacksize+0] = ( +(_SQR_FIXED_POINT_SCALE_*r1-Ts[k][2])*Ts[k][4] + -(_SQR_FIXED_POINT_SCALE_*c1-Ts[k][5])*Ts[k][1] )/det;
-			stackbyteptr[4*newstacksize+1] = ( -(_SQR_FIXED_POINT_SCALE_*r1-Ts[k][2])*Ts[k][3] + +(_SQR_FIXED_POINT_SCALE_*c1-Ts[k][5])*Ts[k][0] )/det;
-			stackbyteptr[4*newstacksize+2] = ( +(_SQR_FIXED_POINT_SCALE_*r2-Ts[k][2])*Ts[k][4] + -(_SQR_FIXED_POINT_SCALE_*c2-Ts[k][5])*Ts[k][1] )/det;
-			stackbyteptr[4*newstacksize+3] = ( -(_SQR_FIXED_POINT_SCALE_*r2-Ts[k][2])*Ts[k][3] + +(_SQR_FIXED_POINT_SCALE_*c2-Ts[k][5])*Ts[k][0] )/det;
+				proximity requirements
 			*/
-
-			//
-			int ok = 1;
-
-			for(i=0; i<newstacksize; ++i)
-				/*
-					proximity requirements
-				*/
-				if(get_bintest_proximity(stack[i], stack[newstacksize]) < (maxnumiters-numiters)*255/maxnumiters)
-					ok = 0;
-
-			int nfails = 0;
-
-			for(k=0; k<n; ++k)
-			{
-				/*
-					stability requirements
-				*/
-
-				int* T = Ts[k];
-
-				//
-				if(0==bintest(stack[newstacksize], THRESHOLD, T, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
-					nfails += 1000;
-
-				for(i=0; i<32; ++i)
-				{
-					int Tp[6];
-
-					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
-					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
-
-					if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
-					{
-						++nfails;
-						break;
-					}
-				}
-			}
-
-			if(nfails > 0)
+			if(get_bintest_proximity(stack[i], stack[newstacksize]) < (maxnumiters-numiters)*255/maxnumiters)
 				ok = 0;
 
-			//
-			if(ok)
-				++newstacksize;
+		int nfails = 0;
+
+		for(k=0; k<n; ++k)
+		{
+			/*
+				stability requirements
+			*/
+
+			int* T = Ts[k];
 
 			//
-			++numiters;
+			if(0==bintest(stack[newstacksize], THRESHOLD, T, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]))
+				nfails += 1000;
+
+			for(i=0; i<32; ++i)
+			{
+				int Tp[6];
+
+				Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
+				Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
+
+				if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
+				{
+					++nfails;
+					break;
+				}
+			}
 		}
+
+		if(nfails > 0)
+			ok = 0;
+
+		//
+		if(ok)
+			++newstacksize;
+
+		//
+		++numiters;
 	}
 
 	//
@@ -167,9 +146,9 @@ float get_similarity
 	n1 = t1[0];
 	n2 = t2[0];
 
-	// compute the transformation matrices
-	///match_template_at(t1, THRESHOLD, T2, &s12, n1, n1, p2, nrows2, ncols2, ldim2);
-	///match_template_at(t2, THRESHOLD, T1, &s21, n2, n2, p1, nrows1, ncols1, ldim1);
+	//
+	match_template_at(t1, THRESHOLD, T2, &s12, n1, p2, nrows2, ncols2, ldim2);
+	match_template_at(t2, THRESHOLD, T1, &s21, n2, p1, nrows1, ncols1, ldim1);
 
 	//
 	return ( s12/(float)n1 + s21/(float)n2 )/2.0f;
