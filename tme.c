@@ -242,25 +242,18 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	return n;
 }
 
-int match_template_at(int32_t template[], int threshold, int r, int c, int s, int* pn1, int n0max, int r0max, uint8_t pixels[], int nrows, int ncols, int ldim)
+int match_template_at(int32_t template[], int threshold, int* T, int* pn1, int n0max, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
-	int i, n0, r0;
+	int i, n0;
 
 	int8_t* ptr;
-
-	int T[6], norm;
 
 	//
 	if(!template[0])
 		return 1;
 
-	// compute the transformation matrix
-	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
-	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
-
 	//
 	n0 = 0;
-	r0 = 0;
 
 	ptr = (int8_t*)&template[1];
 
@@ -269,18 +262,11 @@ int match_template_at(int32_t template[], int threshold, int r, int c, int s, in
 		if( !bintest(template[i+1], threshold, T, pixels, nrows, ncols, ldim) )
 		{
 			++n0;
-			++r0;
 
 			//
 			if(n0 > n0max)
 				return 0;
-
-			//
-			if(r0 > r0max)
-				return 0;
 		}
-		else
-			r0 = MAX(r0-1, 0);
 	}
 
 	//
