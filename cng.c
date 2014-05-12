@@ -127,8 +127,8 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int
 				{
 					int Tp[6];
 
-					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2];
-					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5];
+					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%7 - 6 );
+					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%7 - 6 );
 
 					if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{

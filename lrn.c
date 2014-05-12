@@ -259,17 +259,21 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	//
 	int tcodepoolsize;
-	int32_t tcodepool[1024*MAXNUMTESTS];
+	int32_t tcodepool[1024*MAXNUMTESTS], tmptemplate[MAXNUMTESTS+1];
 
 	tcodepoolsize = 0;
 
 	for(i=0; i<numtemplates; ++i)
-		for(j=0; j<templates[i][0]; ++j)
+	{
+		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ncolss[i], THRESHOLD);
+
+		for(j=0; j<tmptemplate[0]; ++j)
 		{
-			tcodepool[tcodepoolsize] = templates[i][j+1];
+			tcodepool[tcodepoolsize] = tmptemplate[j+1];
 
 			++tcodepoolsize;
 		}
+	}
 
 	t = getticks();
 	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ncolss, numsamples, tcodepool, tcodepoolsize);
