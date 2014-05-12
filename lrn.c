@@ -275,8 +275,10 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		}
 	}
 
+	int perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
+
 	t = getticks();
-	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ncolss, numsamples, tcodepool, tcodepoolsize);
+	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ncolss, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
 	printf("%f [ms] elapsed for clustering\n", 1000.0f*(getticks()-t));
 }
 

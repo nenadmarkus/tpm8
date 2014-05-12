@@ -61,7 +61,7 @@ tnode* load_tree_from_file(FILE* file)
 	return root;
 }
 
-int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize)
+int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int* Ts[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i, j, k, newstacksize, numiters, maxnumiters;
 
@@ -127,8 +127,8 @@ int learn_cluster_features(int32_t stack[], int stacksize, int maxstacksize, int
 				{
 					int Tp[6];
 
-					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%7 - 6 );
-					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%7 - 6 );
+					Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
+					Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
 
 					if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 					{
@@ -246,7 +246,7 @@ int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrow
 	return i; // ?
 }
 
-tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize)
+tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i, newstacksize, n1, n2;
 
@@ -259,7 +259,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	root = (tnode*)malloc(sizeof(tnode));
 
 	//
-	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize);
+	newstacksize = learn_cluster_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
 	if(newstacksize-stacksize > maxnumtests/2)
 	{
@@ -309,14 +309,14 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	n2 = n - n1;
 
 	//
-	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize);
-	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize);
+	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize, perturbationstrength);
+	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	return root;
 }
 
-tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize)
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i;
 	int* inds;
@@ -338,7 +338,7 @@ tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss
 	stack = (int32_t*)malloc(maxstacksize*sizeof(int32_t));
 
 	//
-	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize);
+	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	free(stack);
