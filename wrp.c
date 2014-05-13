@@ -481,6 +481,16 @@ int main(int argc, char* argv[])
 		char path[1024];
 
 		//
+		sprintf(path, "%s/%s-%06d.png", folder, tag, i);
+
+		//
+		cvSaveImage(path, warps[i], 0);
+
+		//
+		printf("%s-%06d.png\n", tag, i);
+
+		/*
+		//
 		sprintf(path, "%s/%s-%06d.rid", folder, tag, i);
 
 		//
@@ -488,6 +498,7 @@ int main(int argc, char* argv[])
 
 		//
 		printf("%s-%06d.rid\n", tag, i);
+		*/
 	}
 
 	//

@@ -182,7 +182,7 @@ int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
 
 tnode* root = 0;
 
-void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int numsamples)
+void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int ldims[], int numsamples)
 {
 	int i, j, n;
 
@@ -231,10 +231,10 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//cvShowImage("...", edges); cvWaitKey(0);
 
 			//
-			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
-			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ncolss[n], THRESHOLD);
+			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ldims[n], THRESHOLD);
+			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 
-			//draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ncolss[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
+			//draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
 
 			edgess[numtemplates] = edgemap;
 
@@ -278,7 +278,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	int perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
 
 	t = getticks();
-	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ncolss, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
+	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
 	printf("%f [ms] elapsed for clustering\n", 1000.0f*(getticks()-t));
 }
 
@@ -309,7 +309,7 @@ void display_image(uint8_t pixels[], int nrows, int ncols, int ldim)
 	cvReleaseImageHeader(&header);
 }
 
-int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int maxn)
+int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[], int ncolss[], int ldims[], int maxn)
 {
 	int n;
 
@@ -334,14 +334,22 @@ int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int
 
 	while( fscanf(list, "%s", name) == 1 )
 	{
+		IplImage* tmp;
 		uint8_t* p = 0;
 
 		sprintf(path, "%s/%s", folder, name);
 
-		if( loadrid(&p, &nrowss[n], &ncolss[n], path) )
+		tmp = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
+
+		///if( loadrid(&p, &nrowss[n], &ncolss[n], path) )
+		if(tmp)
 		{
 			//
-			pix[n] = p;
+			pix[n] = (uint8_t*)tmp->imageData;
+
+			nrowss[n] = tmp->height;
+			ncolss[n] = tmp->width;
+			ldims[n] = tmp->widthStep;
 
 			rs[n] = nrowss[n]/2;
 			cs[n] = ncolss[n]/2;
@@ -367,10 +375,10 @@ int main(int argc, char* argv[])
 	float t;
 	int n, tdepth, i;
 
-	#define MAXN (1<<17)
+	#define MAXN 1024
 
 	static uint8_t* pix[MAXN];
-	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN];
+	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN], ldims[MAXN];
 
 	//
 	smwcrand(time(0));
@@ -380,13 +388,11 @@ int main(int argc, char* argv[])
 	if(argc != 3)
 		return 0;
 
-	n = load_samples(argv[1], pix, rs, cs, ss, nrowss, ncolss, MAXN);
-
-	///for(i=0; i<n; ++i) free(pix[i]);
+	n = load_samples(argv[1], pix, rs, cs, ss, nrowss, ncolss, ldims, MAXN);
 
 	//
 	t = getticks();
-	learn_templates(pix, rs, cs, ss, nrowss, ncolss, n);
+	learn_templates(pix, rs, cs, ss, nrowss, ncolss, ldims, n);
 	printf("elapsed time: %f [s]\n", getticks()-t);
 
 	//
