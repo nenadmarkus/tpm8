@@ -214,16 +214,16 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			uint8_t* edgemap;
 
 			//
-			edgemap = (uint8_t*)malloc( nrowss[n]*ncolss[n]*sizeof(uint8_t) );
+			edgemap = (uint8_t*)malloc( nrowss[n]*ldims[n]*sizeof(uint8_t) );
 
 			//
 			img = cvCreateImageHeader(cvSize(ncolss[n], nrowss[n]), IPL_DEPTH_8U, 1);
 			img->imageData = (char*)pix[n];
-			img->widthStep = ncolss[n];
+			img->widthStep = ldims[n];
 
 			edges = cvCreateImageHeader(cvSize(ncolss[n], nrowss[n]), IPL_DEPTH_8U, 1);
 			edges->imageData = (char*)edgemap;
-			edges->widthStep = ncolss[n];
+			edges->widthStep = ldims[n];
 
 			//
 			cvCanny(img, edges, 150, 225, 3);
@@ -234,7 +234,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 
-			//draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
+			///draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
 
 			edgess[numtemplates] = edgemap;
 
@@ -265,7 +265,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	for(i=0; i<numtemplates; ++i)
 	{
-		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ncolss[i], THRESHOLD);
+		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ldims[i], THRESHOLD);
 
 		for(j=0; j<tmptemplate[0]; ++j)
 		{
