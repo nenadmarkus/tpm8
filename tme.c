@@ -75,8 +75,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	//
 	en = 0;
 
-	for(i=r-s/2; i<r+s/2; ++i)
-		for(j=c-s/2; j<c+s/2; ++j)
+	for(i=MAX(r-s/2, 0); i<MIN(r+s/2, nrows); ++i)
+		for(j=MAX(c-s/2, 0); j<MIN(c+s/2, ncols); ++j)
 			if(mask[i*ldim+j])
 			{
 				if( (i-r)*(i-r) + (j-c)*(j-c) < (s-2)*(s-2)/4 )
