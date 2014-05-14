@@ -139,9 +139,7 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 	
 */
 
-#include "bnt.c"
 #include "tme.c"
-#include "cng.c"
 
 void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
 {

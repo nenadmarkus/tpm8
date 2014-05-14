@@ -110,9 +110,7 @@ uint32_t mwcrand()
 
 #define USE_RGB
 
-#include "bnt.c"
 #include "tme.c"
-#include "cng.c"
 
 tnode* root = 0;
 
