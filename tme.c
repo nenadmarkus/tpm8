@@ -214,8 +214,6 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			//
 			int ok = 1;
 
-			
-
 			for(i=0; i<n; ++i)
 			{
 				/*
