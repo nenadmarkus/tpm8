@@ -165,6 +165,7 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 
 		///warp_template(template, 3.14156, warps[n]);
 		warp_template(template, 3.14156/9, warps[n]);
+		///warp_template(template, 0, warps[n]);
 
 		//
 		///cvShowImage("wrp", warps[n]); cvWaitKey(0);
