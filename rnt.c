@@ -563,14 +563,6 @@ int main(int argc, char* argv[])
 		//printf("%d templates loaded ...\n", numtemplates);
 
 		//
-		fread(&numtemplateclusters, sizeof(int), 1, file);
-
-		for(i=0; i<numtemplateclusters; ++i)
-		{
-			LOAD_TEMPLATE(clustertemplates[i], file);
-		}
-
-		//
 		root = load_tree_from_file(file);
 
 		//

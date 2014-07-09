@@ -417,14 +417,6 @@ int main(int argc, char* argv[])
 		}
 
 		//
-		fwrite(&numtemplateclusters, sizeof(int), 1, file);
-
-		for(i=0; i<numtemplateclusters; ++i)
-		{
-			SAVE_TEMPLATE(clustertemplates[i], file);
-		}
-
-		//
 		save_tree_to_file(root, file);
 
 		//
