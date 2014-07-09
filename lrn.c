@@ -194,7 +194,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	int* Ts[8192];
 
 	int tcodepoolsize, perturbationstrength;
-	int32_t tcodepool[1024*MAXNUMTESTS], tmptemplate[MAXNUMTESTS+1];
+	int32_t tcodepool[1024*MAXNUMTESTS];
 
 	//
 	t = getticks();
@@ -264,6 +264,8 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	for(i=0; i<numtemplates; ++i)
 	{
+		int32_t tmptemplate[MAXNUMTESTS+1];
+
 		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ldims[i], THRESHOLD);
 
 		for(j=0; j<tmptemplate[0]; ++j)
@@ -401,7 +403,7 @@ int main(int argc, char* argv[])
 
 		if(!file)
 		{
-			printf("cannot save results to '%s'", argv[3]);
+			printf("cannot save results to '%s'", argv[2]);
 			return 0;
 		}
 
