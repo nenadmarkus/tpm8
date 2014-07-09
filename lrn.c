@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include <cv.h>
 #include <highgui.h>
@@ -192,6 +193,9 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	int* Ts[8192];
 
+	int tcodepoolsize, perturbationstrength;
+	int32_t tcodepool[1024*MAXNUMTESTS], tmptemplate[MAXNUMTESTS+1];
+
 	//
 	t = getticks();
 
@@ -256,9 +260,6 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
 
 	//
-	int tcodepoolsize;
-	int32_t tcodepool[1024*MAXNUMTESTS], tmptemplate[MAXNUMTESTS+1];
-
 	tcodepoolsize = 0;
 
 	for(i=0; i<numtemplates; ++i)
@@ -273,7 +274,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		}
 	}
 
-	int perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
+	perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
 
 	t = getticks();
 	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
