@@ -187,8 +187,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 		{
 			float o, gr, gc;
 
-			int e;
-			int elist[1024];
+			int e, elist[1024], ok;
 
 			//
 			e = mwcrand()%en;
@@ -212,7 +211,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			b = *(int32_t*)&ptr[4*n+0];
 
 			//
-			int ok = 1;
+			ok = 1;
 
 			for(i=0; i<n; ++i)
 			{
@@ -264,6 +263,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 
 		while(n<maxnumtests && numiters<maxnumiters)
 		{
+			int ok;
+
 			//
 			r1 = r - s/2 + mwcrand()%s;
 			c1 = c - s/2 + mwcrand()%s;
@@ -286,7 +287,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			b = *(int32_t*)&ptr[4*n+0];
 
 			//
-			int ok = 1;
+			ok = 1;
 
 			for(i=0; i<32; ++i)
 			{
@@ -426,13 +427,15 @@ int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* 
 
 	while(newstacksize<maxstacksize && numiters<maxnumiters)
 	{
+		int ok, nfails;
+
 		//
 		k = mwcrand()%tcodepoolsize;
 
 		stack[newstacksize] = tcodepool[k];
 
 		//
-		int ok = 1;
+		ok = 1;
 
 		for(i=0; i<newstacksize; ++i)
 			/*
@@ -441,7 +444,7 @@ int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* 
 			if(get_bintest_proximity(stack[i], stack[newstacksize]) < (maxnumiters-numiters)*255/maxnumiters)
 				ok = 0;
 
-		int nfails = 0;
+		nfails = 0;
 
 		for(k=0; k<n; ++k)
 		{
