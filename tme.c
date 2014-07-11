@@ -12,6 +12,9 @@
 
 #define SWAP(a, b) (((a) == (b)) || (((a) = (a)^(b)), ((b) = (a)^(b)), ((a) = (a)^(b))))
 
+#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
+#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
+
 /*
 	
 */
@@ -79,9 +82,6 @@ int get_bintest_proximity(int32_t t1, int32_t t2)
 	//
 	return (r1-r2)*(r1-r2) + (c1-c2)*(c1-c2);
 }
-
-#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
-#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
 
 float get_area_orientation(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
 {

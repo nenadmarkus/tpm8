@@ -83,13 +83,15 @@ float randuniform(float a, float b)
 	
 */
 
-void warp_template(IplImage* in, float maxrotangle, IplImage* out)
+void warp_template(IplImage* in, float o, float s1, float s2, IplImage* out)
 {
 	//
-	float phi = randuniform(-maxrotangle, +maxrotangle);
+	/*
+	float phi = randuniform(-po, +po);
 
 	float s1 = randuniform(0.85f, 1.15f);
 	float s2 = randuniform(0.85f, 1.15f);
+	*/
 
 	CvMat cvmat1, cvmat2, cvmat3, H;
 
@@ -102,8 +104,8 @@ void warp_template(IplImage* in, float maxrotangle, IplImage* out)
 	T0[2][0] = 0.0f; T0[2][1] = 0.0f; T0[2][2] = 1.0f;
 
 	//
-	T1[0][0] = cos(phi); T1[0][1] = -sin(phi); T1[0][2] = 0.0f;
-	T1[1][0] = sin(phi); T1[1][1] = cos(phi); T1[1][2] = 0.0f;
+	T1[0][0] = +cos(o); T1[0][1] = -sin(o); T1[0][2] = 0.0f;
+	T1[1][0] = +sin(o); T1[1][1] = +cos(o); T1[1][2] = 0.0f;
 	T1[2][0] = 0.0f; T1[2][1] = 0.0f; T1[2][2] = 1.0f;
 
 	cvmat1 = cvMat(3, 3, CV_32FC1, &T1[0][0]);
@@ -135,7 +137,7 @@ void warp_template(IplImage* in, float maxrotangle, IplImage* out)
 	cvWarpPerspective(in, out, &H, CV_INTER_LINEAR, cvScalarAll(0));
 }
 
-int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* warps[])
+int generate_warps(IplImage* img, int r, int c, int s, float o, int nwarps, IplImage* warps[])
 {
 	int i, j, n;
 
@@ -164,9 +166,8 @@ int generate_warps(IplImage* img, int r, int c, int s, int nwarps, IplImage* war
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		///warp_template(template, 3.14156, warps[n]);
-		warp_template(template, 3.14156/9, warps[n]);
-		///warp_template(template, 0, warps[n]);
+		//warp_template(template, -o+randuniform(-3.14f/9.0f, +3.14f/9.0f), randuniform(0.85f, 1.15f), randuniform(0.85f, 1.15f), warps[n]);
+		warp_template(template, -o, 1.0f, 1.0f, warps[n]);
 
 		//
 		///cvShowImage("wrp", warps[n]); cvWaitKey(0);
@@ -475,7 +476,7 @@ int main(int argc, char* argv[])
 	//
 	warps = (IplImage**)malloc(nwarps*sizeof(IplImage*));
 
-	generate_warps(gray, r, c, s, nwarps, warps);
+	generate_warps(gray, r, c, s, 3.14f/2, nwarps, warps);
 
 	//
 	for(i=0; i<nwarps; ++i)
