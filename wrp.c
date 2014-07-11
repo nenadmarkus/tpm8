@@ -166,8 +166,8 @@ int generate_warps(IplImage* img, int r, int c, int s, float o, int nwarps, IplI
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		//warp_template(template, -o+randuniform(-3.14f/9.0f, +3.14f/9.0f), randuniform(0.85f, 1.15f), randuniform(0.85f, 1.15f), warps[n]);
-		warp_template(template, -o, 1.0f, 1.0f, warps[n]);
+		//warp_template(template, o+randuniform(-3.14f/9.0f, +3.14f/9.0f), randuniform(0.85f, 1.15f), randuniform(0.85f, 1.15f), warps[n]);
+		warp_template(template, o, 1.0f, 1.0f, warps[n]);
 
 		//
 		///cvShowImage("wrp", warps[n]); cvWaitKey(0);
