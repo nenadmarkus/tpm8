@@ -169,8 +169,10 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	}
 
 	// compute the transformation matrix
-	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
-	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+	///T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
+	///T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+
+	compute_rcs_transformation(T, r, c, s);
 
 	//
 	n = 0;
@@ -234,8 +236,11 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				*/
 				int Tp[6];
 
-				Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
-				Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+				///Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
+				///Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+
+				Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
+				Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
 
 				if( 0==bintest(b, threshold, Tp, pixels, nrows, ncols, ldim) )
 					ok = 0;
