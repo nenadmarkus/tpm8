@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include <cv.h>
 #include <highgui.h>
@@ -178,7 +179,7 @@ int find_connected_components(int a[], int rs[], int cs[], int ss[], int n)
 
 int cluster_detections(int a[], int rs[], int cs[], int ss[], int qs[], int n)
 {
-	int ncc, cc;
+	int ncc, cc, idx;
 
 	//
 	ncc = find_connected_components(a, rs, cs, ss, n);
@@ -187,7 +188,7 @@ int cluster_detections(int a[], int rs[], int cs[], int ss[], int qs[], int n)
 		return 0;
 
 	//
-	int idx = 0;
+	idx = 0;
 
 	for(cc=1; cc<=ncc; ++cc)
 	{
@@ -395,6 +396,9 @@ void process_image(IplImage* img, int draw, int print)
 
 	float t;
 
+	float SCALEFACTOR, STRIDEFACTOR;
+	int MINSIZE, MAXSIZE;
+
 #ifndef USE_RGB
 	// grayscale image
 	if(!toprocess)
@@ -414,11 +418,11 @@ void process_image(IplImage* img, int draw, int print)
 	ldim = toprocess->widthStep;
 
 	//
-	float SCALEFACTOR = 1.1f;
-	float STRIDEFACTOR = 0.06f;
+	SCALEFACTOR = 1.1f;
+	STRIDEFACTOR = 0.06f;
 
-	int MINSIZE = 100;//75;
-	int MAXSIZE = 600;//150;
+	MINSIZE = 100;//75;
+	MAXSIZE = 600;//150;
 
 	t = getticks();
 	ndetections = match_templates(rs, cs, ss, qs, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
@@ -557,14 +561,6 @@ int main(int argc, char* argv[])
 		}
 
 		//printf("%d templates loaded ...\n", numtemplates);
-
-		//
-		fread(&numtemplateclusters, sizeof(int), 1, file);
-
-		for(i=0; i<numtemplateclusters; ++i)
-		{
-			LOAD_TEMPLATE(clustertemplates[i], file);
-		}
 
 		//
 		root = load_tree_from_file(file);

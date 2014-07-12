@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #include <cv.h>
 #include <highgui.h>
@@ -192,6 +193,9 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 	int* Ts[8192];
 
+	int tcodepoolsize, perturbationstrength;
+	int32_t tcodepool[1024*MAXNUMTESTS];
+
 	//
 	t = getticks();
 
@@ -256,13 +260,12 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
 
 	//
-	int tcodepoolsize;
-	int32_t tcodepool[1024*MAXNUMTESTS], tmptemplate[MAXNUMTESTS+1];
-
 	tcodepoolsize = 0;
 
 	for(i=0; i<numtemplates; ++i)
 	{
+		int32_t tmptemplate[MAXNUMTESTS+1];
+
 		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ldims[i], THRESHOLD);
 
 		for(j=0; j<tmptemplate[0]; ++j)
@@ -273,7 +276,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		}
 	}
 
-	int perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
+	perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
 
 	t = getticks();
 	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
@@ -400,7 +403,7 @@ int main(int argc, char* argv[])
 
 		if(!file)
 		{
-			printf("cannot save results to '%s'", argv[3]);
+			printf("cannot save results to '%s'", argv[2]);
 			return 0;
 		}
 
@@ -411,14 +414,6 @@ int main(int argc, char* argv[])
 		{
 			SAVE_TEMPLATE(templates[i], file);
 			SAVE_TEMPLATE(smoothnesstemplates[i], file);
-		}
-
-		//
-		fwrite(&numtemplateclusters, sizeof(int), 1, file);
-
-		for(i=0; i<numtemplateclusters; ++i)
-		{
-			SAVE_TEMPLATE(clustertemplates[i], file);
 		}
 
 		//

@@ -12,6 +12,9 @@
 
 #define SWAP(a, b) (((a) == (b)) || (((a) = (a)^(b)), ((b) = (a)^(b)), ((a) = (a)^(b))))
 
+#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
+#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
+
 /*
 	
 */
@@ -79,9 +82,6 @@ int get_bintest_proximity(int32_t t1, int32_t t2)
 	//
 	return (r1-r2)*(r1-r2) + (c1-c2)*(c1-c2);
 }
-
-#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
-#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
 
 float get_area_orientation(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize)
 {
@@ -189,8 +189,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 		{
 			float o, gr, gc;
 
-			int e;
-			int elist[1024];
+			int e, elist[1024], ok;
 
 			//
 			e = mwcrand()%en;
@@ -214,7 +213,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			b = *(int32_t*)&ptr[4*n+0];
 
 			//
-			int ok = 1;
+			ok = 1;
 
 			for(i=0; i<n; ++i)
 			{
@@ -269,6 +268,8 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 
 		while(n<maxnumtests && numiters<maxnumiters)
 		{
+			int ok;
+
 			//
 			r1 = r - s/2 + mwcrand()%s;
 			c1 = c - s/2 + mwcrand()%s;
@@ -291,7 +292,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			b = *(int32_t*)&ptr[4*n+0];
 
 			//
-			int ok = 1;
+			ok = 1;
 
 			for(i=0; i<32; ++i)
 			{
@@ -431,13 +432,15 @@ int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* 
 
 	while(newstacksize<maxstacksize && numiters<maxnumiters)
 	{
+		int ok, nfails;
+
 		//
 		k = mwcrand()%tcodepoolsize;
 
 		stack[newstacksize] = tcodepool[k];
 
 		//
-		int ok = 1;
+		ok = 1;
 
 		for(i=0; i<newstacksize; ++i)
 			/*
@@ -446,7 +449,7 @@ int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* 
 			if(get_bintest_proximity(stack[i], stack[newstacksize]) < (maxnumiters-numiters)*255/maxnumiters)
 				ok = 0;
 
-		int nfails = 0;
+		nfails = 0;
 
 		for(k=0; k<n; ++k)
 		{
