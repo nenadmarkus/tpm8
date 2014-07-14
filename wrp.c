@@ -152,10 +152,6 @@ int generate_warps(IplImage* img, int r, int c, int s, float o, int nwarps, IplI
 
 	template = cvCreateImage(cvSize(tsize, tsize), IPL_DEPTH_8U, 1);
 
-	///cvSetImageROI(img, cvRect(c-tsize/2, r-tsize/2, tsize, tsize));
-	///cvCopy(img, template, 0);
-	///cvResetImageROI(img);
-
 	cvGetRectSubPix(img, template, cvPoint2D32f(c, r));
 
 	//
@@ -166,8 +162,10 @@ int generate_warps(IplImage* img, int r, int c, int s, float o, int nwarps, IplI
 	{
 		warps[n] = cvCreateImage(cvSize(template->width, template->height), IPL_DEPTH_8U, 1);
 
-		//warp_template(template, o+randuniform(-3.14f/9.0f, +3.14f/9.0f), randuniform(0.85f, 1.15f), randuniform(0.85f, 1.15f), warps[n]);
-		warp_template(template, o, 1.0f, 1.0f, warps[n]);
+		if(j==0)
+			warp_template(template, o, 1.0f, 1.0f, warps[n]);
+		else
+			warp_template(template, o+randuniform(-3.14f/9.0f, +3.14f/9.0f), randuniform(0.85f, 1.15f), randuniform(0.85f, 1.15f), warps[n]);
 
 		//
 		///cvShowImage("wrp", warps[n]); cvWaitKey(0);
@@ -196,6 +194,7 @@ IplImage* tmpimg = 0;
 
 int nclicks = 0;
 int _r, _c, _s;
+float _o;
 
 void mouse_callback(int e, int x, int y, int flags, void* params)
 {
@@ -230,12 +229,18 @@ void mouse_callback(int e, int x, int y, int flags, void* params)
 			cvCircle(tmpimg, cvPoint(x, y), _s/2, CV_RGB(0,0,255), 2, 8, 0);
 
 			//
+			_o = 0.0f;
+
+			//
 			nclicks = 1;
 		}
 		else if(nclicks==1)
 		{
 			//
 			_s = 2*sqrt( (_r-y)*(_r-y) + (_c-x)*(_c-x) );
+
+			//
+			///_o = ?
 
 			//
 			cvCircle(tmpimg, cvPoint(_c, _r), _s/2, CV_RGB(255,0,0), 2, 8, 0);
@@ -258,7 +263,7 @@ void mouse_callback(int e, int x, int y, int flags, void* params)
 	}
 }
 
-int select_region(IplImage* frame, int* pr, int* pc, int* ps)
+int select_region(IplImage* frame, int* pr, int* pc, int* ps, float* po)
 {
 	int stop;
 
@@ -297,6 +302,7 @@ int select_region(IplImage* frame, int* pr, int* pc, int* ps)
 		*pr = _r;
 		*pc = _c;
 		*ps = _s;
+		*po = _o;
 	}
 
 	//
@@ -313,7 +319,7 @@ int select_region(IplImage* frame, int* pr, int* pc, int* ps)
 	
 */
 
-int process_webcam_frames(IplImage** pimg, int* pr, int* pc, int* ps)
+int process_webcam_frames(IplImage** pimg, int* pr, int* pc, int* ps, float* po)
 {
 	CvCapture* capture;
 
@@ -371,7 +377,7 @@ int process_webcam_frames(IplImage** pimg, int* pr, int* pc, int* ps)
 			//
 			if(key == KEY_SPACE)
 			{
-				if( select_region(framecopy, pr, pc, ps) )
+				if( select_region(framecopy, pr, pc, ps, po) )
 				{
 					*pimg = cvCreateImage(cvSize(framecopy->width, framecopy->height), framecopy->depth, framecopy->nChannels);
 
@@ -410,13 +416,14 @@ int main(int argc, char* argv[])
 	IplImage* rgb;
 
 	int r, c, s, nwarps;
+	float o;
 
 	char tag[1024], folder[1024];
 
 	IplImage** warps;
 
 	//
-	if(argc == 8)
+	if(argc == 9)
 	{
 		//
 		rgb = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR);
@@ -428,10 +435,11 @@ int main(int argc, char* argv[])
 		sscanf(argv[2], "%d", &r);
 		sscanf(argv[3], "%d", &c);
 		sscanf(argv[4], "%d", &s);
-		sscanf(argv[5], "%d", &nwarps);
+		sscanf(argv[5], "%f", &o);
+		sscanf(argv[6], "%d", &nwarps);
 
-		sscanf(argv[6], "%s", tag);
-		sscanf(argv[7], "%s", folder);
+		sscanf(argv[7], "%s", tag);
+		sscanf(argv[8], "%s", folder);
 	}
 	else if(argc == 5)
 	{
@@ -442,7 +450,7 @@ int main(int argc, char* argv[])
 		if(!gray || !rgb)
 			return 0;
 
-		if(!select_region(rgb, &r, &c, &s))
+		if(!select_region(rgb, &r, &c, &s, &o))
 			return 0;
 
 		sscanf(argv[2], "%d", &nwarps);
@@ -453,7 +461,7 @@ int main(int argc, char* argv[])
 	else if(argc == 4)
 	{
 		//
-		if(!process_webcam_frames(&rgb, &r, &c, &s))
+		if(!process_webcam_frames(&rgb, &r, &c, &s, &o))
 			return 0;
 
 		gray = cvCreateImage(cvSize(rgb->width, rgb->height), IPL_DEPTH_8U, 1);
@@ -468,7 +476,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		printf("/path/to/image r c s nwarps tag /output/folder\n");
+		printf("/path/to/image r c s o nwarps tag /output/folder\n");
 
 		return 0;
 	}
@@ -476,7 +484,7 @@ int main(int argc, char* argv[])
 	//
 	warps = (IplImage**)malloc(nwarps*sizeof(IplImage*));
 
-	generate_warps(gray, r, c, s, 3.14f/2, nwarps, warps);
+	generate_warps(gray, r, c, s, o, nwarps, warps);
 
 	//
 	for(i=0; i<nwarps; ++i)
