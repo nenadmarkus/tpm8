@@ -236,7 +236,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 
-			///draw_template_pattern(edges, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(edges, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", edges); cvWaitKey(0);
+			///draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); printf("%d\n", templates[numtemplates][0]); cvWaitKey(0);
 
 			edgess[numtemplates] = edgemap;
 

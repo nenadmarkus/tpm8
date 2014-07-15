@@ -178,7 +178,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 
 	if(useorientation == 1)
 	{
-		p = (int)( s*s2p );
+		p = MAX((int)( s*s2p ), 1);
 		maxnumiters = 16*maxnumtests;
 
 		numiters = 0;
@@ -256,7 +256,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	}
 	else
 	{
-		p = (int)( s*s2p );
+		p = MAX((int)( s*s2p ), 1);
 		maxnumiters = 64*maxnumtests;
 
 		numiters = 0;
