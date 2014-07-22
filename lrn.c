@@ -4,13 +4,7 @@
 #include <cv.h>
 #include <highgui.h>
 
-/*
-	parameters ...
-*/
-
-#define THRESHOLD 25
-#define MAXNUMTESTS (128)
-#define S2P (1/20.0f)
+#include "tme.h"
 
 /*
 	portable time function
@@ -52,44 +46,6 @@ float getticks()
 	return (float)( lint.QuadPart/freq );
 }
 #endif
-
-/*
-	PRNG
-*/
-
-uint32_t mwcrand_r(uint64_t* state)
-{
-	uint32_t* m;
-
-	//
-	m = (uint32_t*)state;
-
-	// bad state?
-	if(m[0] == 0)
-		m[0] = 0xAAAA;
-
-	if(m[1] == 0)
-		m[1] = 0xBBBB;
-
-	// mutate state
-	m[0] = 36969 * (m[0] & 65535) + (m[0] >> 16);
-	m[1] = 18000 * (m[1] & 65535) + (m[1] >> 16);
-
-	// output
-	return (m[0] << 16) + m[1];
-}
-
-uint64_t prngglobal = 0x12345678000fffffLL;
-
-void smwcrand(uint32_t seed)
-{
-	prngglobal = 0x12345678000fffffLL*seed;
-}
-
-uint32_t mwcrand()
-{
-	return mwcrand_r(&prngglobal);
-}
 
 /*
 	
@@ -139,8 +95,6 @@ int loadrid(uint8_t* pixels[], int* nrows, int* ncols, const char* path)
 /*
 	
 */
-
-#include "tme.c"
 
 void draw_template_pattern(IplImage* drawto, int32_t template[], int r, int c, int s, uint8_t pixels[], int nrows, int ncols, int ldim)
 {
@@ -342,7 +296,6 @@ int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int
 
 		tmp = cvLoadImage(path, CV_LOAD_IMAGE_GRAYSCALE);
 
-		///if( loadrid(&p, &nrowss[n], &ncolss[n], path) )
 		if(tmp)
 		{
 			//
@@ -380,10 +333,6 @@ int main(int argc, char* argv[])
 
 	static uint8_t* pix[MAXN];
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN], ldims[MAXN];
-
-	//
-	smwcrand(time(0));
-	///smwcrand(12344);
 
 	//
 	if(argc != 3)

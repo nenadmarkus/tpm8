@@ -1,26 +1,56 @@
-#ifndef ABS
-#define ABS(x) ((x)>0?(x):(-(x)))
-#endif
-
-#ifndef MAX
-#define MAX(a, b) ((a)>(b)?(a):(b))
-#endif
-
-#ifndef MIN
-#define MIN(a, b) ((a)<(b)?(a):(b))
-#endif
-
-#define SWAP(a, b) (((a) == (b)) || (((a) = (a)^(b)), ((b) = (a)^(b)), ((a) = (a)^(b))))
-
-#define SAVE_TEMPLATE(t, file) fwrite((t), sizeof(int32_t), (t)[0]+1, (file))
-#define LOAD_TEMPLATE(t, file) fread(&(t)[0], sizeof(int32_t), 1, (file)), ((t)[0]==0)?0:fread(&(t)[1], sizeof(int32_t), (t)[0], (file))
+#include "tme.h"
 
 /*
 	
 */
 
-#define _FIXED_POINT_SCALE_ 256
-#define _SQR_FIXED_POINT_SCALE_ (_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_)
+#define ABS(x) ((x)>0?(x):(-(x)))
+#define MAX(a, b) ((a)>(b)?(a):(b))
+#define MIN(a, b) ((a)<(b)?(a):(b))
+
+#define SWAP(a, b) (((a) == (b)) || (((a) = (a)^(b)), ((b) = (a)^(b)), ((a) = (a)^(b))))
+
+/*
+	PRNG
+*/
+
+uint32_t mwcrand_r(uint64_t* state)
+{
+	uint32_t* m;
+
+	//
+	m = (uint32_t*)state;
+
+	// bad state?
+	if(m[0] == 0)
+		m[0] = 0xAAAA;
+
+	if(m[1] == 0)
+		m[1] = 0xBBBB;
+
+	// mutate state
+	m[0] = 36969 * (m[0] & 65535) + (m[0] >> 16);
+	m[1] = 18000 * (m[1] & 65535) + (m[1] >> 16);
+
+	// output
+	return (m[0] << 16) + m[1];
+}
+
+uint64_t prngglobal = 0x12345678000fffffLL;
+
+void smwcrand(uint32_t seed)
+{
+	prngglobal = 0x12345678000fffffLL*seed;
+}
+
+uint32_t mwcrand()
+{
+	return mwcrand_r(&prngglobal);
+}
+
+/*
+	
+*/
 
 void compute_rcs_transformation(int* T, int r, int c, int s)
 {
@@ -42,11 +72,11 @@ int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, in
 	p = (int8_t*)&tcode;
 
 	//
-	r1 = (T[0]*p[0] + T[1]*p[1] + _FIXED_POINT_SCALE_*T[2])/_SQR_FIXED_POINT_SCALE_;
-	c1 = (T[3]*p[0] + T[4]*p[1] + _FIXED_POINT_SCALE_*T[5])/_SQR_FIXED_POINT_SCALE_;
+	r1 = (T[0]*p[0] + T[1]*p[1] + _FIXED_POINT_SCALE_*T[2])/(_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_);
+	c1 = (T[3]*p[0] + T[4]*p[1] + _FIXED_POINT_SCALE_*T[5])/(_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_);
 
-	r2 = (T[0]*p[2] + T[1]*p[3] + _FIXED_POINT_SCALE_*T[2])/_SQR_FIXED_POINT_SCALE_;
-	c2 = (T[3]*p[2] + T[4]*p[3] + _FIXED_POINT_SCALE_*T[5])/_SQR_FIXED_POINT_SCALE_;
+	r2 = (T[0]*p[2] + T[1]*p[3] + _FIXED_POINT_SCALE_*T[2])/(_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_);
+	c2 = (T[3]*p[2] + T[4]*p[3] + _FIXED_POINT_SCALE_*T[5])/(_FIXED_POINT_SCALE_*_FIXED_POINT_SCALE_);
 
 	//
 #ifndef USE_RGB
@@ -365,17 +395,6 @@ int match_template_at(int32_t template[], int threshold, int* T, int* pn1, int n
 	
 */
 
-typedef struct _tnode
-{
-	int leaf, tag;
-
-	int32_t* template;
-
-	struct _tnode* subtree1;
-	struct _tnode* subtree2;
-
-} tnode;
-
 int save_tree_to_file(tnode* root, FILE* file)
 {
 	int32_t dummy;
@@ -411,7 +430,7 @@ tnode* load_tree_from_file(FILE* file)
 	fread(&root->tag, sizeof(int), 1, file);
 
 	//
-	root->template = (int32_t*)malloc((MAXNUMTESTS+1)*sizeof(int32_t));
+	root->template = (int32_t*)malloc((256+1)*sizeof(int32_t));
 
 	LOAD_TEMPLATE(root->template, file);
 
