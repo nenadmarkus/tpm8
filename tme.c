@@ -540,6 +540,9 @@ float get_similarity
 	n1 = t1[0];
 	n2 = t2[0];
 
+	if(n1==0 || n2==0)
+		return 0.0f;
+
 	//
 	match_template_at(t1, THRESHOLD, T2, &s12, n1, p2, nrows2, ncols2, ldim2);
 	match_template_at(t2, THRESHOLD, T1, &s21, n2, p1, nrows1, ncols1, ldim1);
@@ -565,6 +568,22 @@ int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrow
 
 	while(!stop)
 	{
+		/*
+		///printf("%d %d\n", i, j);
+		if(i==757 && j==951)
+		{
+			printf("%d %d\n", templates[inds[i]][0], templates[inds[j]][0]);
+
+			printf("%f\n",
+			get_similarity
+			(
+				templates[inds[0]], Ts[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
+				templates[inds[i]], Ts[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]
+			)
+			);
+		}
+		*/
+
 		//
 		while
 		(
@@ -619,7 +638,7 @@ int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrow
 	return i; // ?
 }
 
-tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
+tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtestspernode, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i, newstacksize, n1, n2;
 
@@ -632,11 +651,11 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	root = (tnode*)malloc(sizeof(tnode));
 
 	//
-	newstacksize = learn_joint_features(stack, stacksize, stacksize+maxnumtests, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
+	newstacksize = learn_joint_features(stack, stacksize, stacksize+maxnumtestspernode, Ts, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
-	if(newstacksize-stacksize > maxnumtests/2)
+	if(newstacksize-stacksize > maxnumtestspernode/2)
 	{
-		root->template = (int32_t*)malloc((maxnumtests+1)*sizeof(int32_t));
+		root->template = (int32_t*)malloc((maxnumtestspernode+1)*sizeof(int32_t));
 
 		//
 		root->template[0] = newstacksize - stacksize;
@@ -645,7 +664,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 			root->template[1+i-stacksize] = stack[i];
 
 		//
-		///if(n>1)printf("%d: %d, %d\n", depth, root->template[0], n);
+		///printf("%d: %d, %d\n", depth, root->template[0], n);
 	}
 	else
 		root->template = 0;
@@ -682,8 +701,8 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	n2 = n - n1;
 
 	//
-	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize, perturbationstrength);
-	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtests, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize, perturbationstrength);
+	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize, perturbationstrength);
+	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	return root;

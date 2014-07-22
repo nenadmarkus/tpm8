@@ -194,7 +194,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			learn_template(templates[numtemplates], MAXNUMTESTS, 1, S2P, rs[n], cs[n], ss[n], pix[n], edgemap, nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 			learn_template(smoothnesstemplates[numtemplates], MAXNUMTESTS, 0, S2P, rs[n], cs[n], ss[n], pix[n], pix[n], nrowss[n], ncolss[n], ldims[n], THRESHOLD);
 
-			///draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); printf("%d\n", templates[numtemplates][0]); cvWaitKey(0);
+			//draw_template_pattern(img, templates[numtemplates], rs[n], cs[n], ss[n], pix[n], nrowss[n], ncolss[n], ldims[n]); cvCircle(img, cvPoint(cs[n], rs[n]), ss[n]/2, CV_RGB(255, 255, 255), 2, 8, 0); cvShowImage("...", img); printf("%d\n", templates[numtemplates][0]); cvWaitKey(0);
 
 			edgess[numtemplates] = edgemap;
 
@@ -259,7 +259,7 @@ void display_image(uint8_t pixels[], int nrows, int ncols, int ldim)
 	header->imageData = (char*)pixels;
 
 	//
-	cvCircle(header, cvPoint(ncols/2, nrows/2), 2*MIN(nrows, ncols)/3/2, CV_RGB(0, 0, 0), 2, 8, 0);
+	cvCircle(header, cvPoint(ncols/2, nrows/2), 2*MIN(nrows, ncols)/3/2, CV_RGB(255, 255, 255), 2, 8, 0);
 
 	//
 	cvShowImage("...", header);
@@ -291,10 +291,9 @@ int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int
 	//
 	n = 0;
 
-	while( fscanf(list, "%s", name) == 1 )
+	while( fscanf(list, "%s", name)==1 && n<maxn)
 	{
 		IplImage* tmp;
-		uint8_t* p = 0;
 
 		sprintf(path, "%s/%s", folder, name);
 
@@ -313,12 +312,15 @@ int load_samples(char* folder, uint8_t* pix[], int rs[], int cs[], int ss[], int
 			cs[n] = ncolss[n]/2;
 			ss[n] = 2*MIN(nrowss[n], ncolss[n])/3;
 
-			///display_image(p, nrowss[n], ncolss[n], ncolss[n]); cvWaitKey(0);
+			///display_image(pix[n], nrowss[n], ncolss[n], ncolss[n]); cvWaitKey(0);
 
 			//
 			++n;
 		}
 	}
+
+	//
+	fclose(list);
 
 	//
 	return n;
@@ -333,7 +335,7 @@ int main(int argc, char* argv[])
 	float t;
 	int n, tdepth, i;
 
-	#define MAXN 1024
+	#define MAXN 4192
 
 	static uint8_t* pix[MAXN];
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN], ldims[MAXN];
