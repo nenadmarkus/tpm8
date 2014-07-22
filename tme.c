@@ -61,6 +61,12 @@ void compute_rcs_transformation(int* T, int r, int c, int s)
 	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _FIXED_POINT_SCALE_*c;
 }
 
+void compute_rcso_transformation(int* T, int r, int c, int s, float o)
+{
+	T[0] = +cos(o)*_FIXED_POINT_SCALE_*s; T[1] = -sin(o)*_FIXED_POINT_SCALE_*s; T[2] = _FIXED_POINT_SCALE_*r;
+	T[3] = +sin(o)*_FIXED_POINT_SCALE_*s; T[4] = +cos(o)*_FIXED_POINT_SCALE_*s; T[5] = _FIXED_POINT_SCALE_*c;
+}
+
 /*
 	
 */
@@ -368,7 +374,7 @@ int match_template_at(int32_t template[], int threshold, int* T, int* pn1, int n
 
 	//
 	if(!template[0])
-		return 1;
+		return 0;
 
 	//
 	n0 = 0;
@@ -638,7 +644,7 @@ int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrow
 	return i; // ?
 }
 
-tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtestspernode, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
+tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtestspernode, int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int tags[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
 {
 	int i, newstacksize, n1, n2;
 
@@ -672,7 +678,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtestspe
 	if(n == 1)
 	{
 		root->leaf = 1;
-		root->tag = inds[0];
+		root->tag = tags[inds[0]];
 
 		root->subtree1 = 0;
 		root->subtree2 = 0;
@@ -701,17 +707,16 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtestspe
 	n2 = n - n1;
 
 	//
-	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[0 ], n1, tcodepool, tcodepoolsize, perturbationstrength);
-	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, &inds[n1], n2, tcodepool, tcodepoolsize, perturbationstrength);
+	root->subtree1 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, tags, &inds[0 ], n1, tcodepool, tcodepoolsize, perturbationstrength);
+	root->subtree2 = grow_subtree(depth+1, stack, newstacksize, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, tags, &inds[n1], n2, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	return root;
 }
 
-tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength)
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int tags[], int inds[], int n, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength)
 {
 	int i;
-	int* inds;
 
 	int maxstacksize;
 	int32_t* stack;
@@ -719,18 +724,12 @@ tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss
 	tnode* root;
 
 	//
-	inds = (int*)malloc(n*sizeof(int));
-
-	for(i=0; i<n; ++i)
-		inds[i] = i;
-
-	//
 	maxstacksize = n*maxnumtestspernode;
 
 	stack = (int32_t*)malloc(maxstacksize*sizeof(int32_t));
 
 	//
-	root = grow_subtree(0, stack, 0, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
+	root = grow_subtree(0, stack, 0, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, tags, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	free(stack);
@@ -745,7 +744,7 @@ int get_tree_output(tnode* root, int threshold, int n0max, int* T, uint8_t pixel
 	{
 		int n1;
 
-		if(!match_template_at(root->template, threshold, T, &n1, n0max, pixels, nrows, ncols, ldim))
+		if(root->template[0] && !match_template_at(root->template, threshold, T, &n1, n0max, pixels, nrows, ncols, ldim))
 			return 0;
 	}
 

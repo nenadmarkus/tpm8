@@ -219,6 +219,7 @@ int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int
 
 				//
 				compute_rcs_transformation(T, r, c, s);
+				///compute_rcso_transformation(T, r, c, s, -3.14f/2);
 
 				//
 				//*

@@ -12,6 +12,7 @@
 #define _FIXED_POINT_SCALE_ 256
 
 void compute_rcs_transformation(int* T, int r, int c, int s);
+void compute_rcso_transformation(int* T, int r, int c, int s, float o);
 
 /*
 	
@@ -39,7 +40,7 @@ typedef struct _tnode
 
 } tnode;
 
-tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength);
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int tags[], int inds[], int numinds, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength);
 
 tnode* load_tree_from_file(FILE* file);
 int save_tree_to_file(tnode* root, FILE* file);

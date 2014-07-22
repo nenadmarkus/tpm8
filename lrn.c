@@ -154,6 +154,10 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	int tcodepoolsize, perturbationstrength;
 	int32_t tcodepool[1024*MAXNUMTESTS];
 
+	int numinds;
+	int* inds;
+	int* tags;
+
 	//
 	t = getticks();
 
@@ -218,6 +222,11 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	printf("%d templates learned in %f [ms]\n", numtemplates, 1000.0f*(getticks()-t));
 
 	//
+	inds = (int*)malloc(numsamples*sizeof(int));
+	tags = (int*)malloc(numsamples*sizeof(int));
+
+	numinds = 0;
+
 	tcodepoolsize = 0;
 
 	for(i=0; i<numtemplates; ++i)
@@ -226,19 +235,35 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 
 		learn_template(tmptemplate, MAXNUMTESTS, 1, 1.5f*S2P, rs[i], cs[i], ss[i], pix[i], edgess[i], nrowss[i], ncolss[i], ldims[i], THRESHOLD);
 
-		for(j=0; j<tmptemplate[0]; ++j)
+		//
+		if(tmptemplate[0]>MAXNUMTESTS/2)
 		{
-			tcodepool[tcodepoolsize] = tmptemplate[j+1];
+			//
+			inds[numinds] = i;
+			tags[numinds] = i;
 
-			++tcodepoolsize;
+			//
+			for(j=0; j<tmptemplate[0]; ++j)
+			{
+				tcodepool[tcodepoolsize] = tmptemplate[j+1];
+
+				++tcodepoolsize;
+			}
+
+			//
+			++numinds;
 		}
 	}
 
 	perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
 
 	t = getticks();
-	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, MAXNUMTESTS/4, perturbationstrength);
+	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, tags, inds, numinds, tcodepool, tcodepoolsize, MAXNUMTESTS/4, perturbationstrength);
 	printf("%f [ms] elapsed for clustering\n", 1000.0f*(getticks()-t));
+
+	//
+	free(inds);
+	free(tags);
 }
 
 /*
