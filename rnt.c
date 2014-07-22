@@ -7,11 +7,14 @@
 #include "tme.h"
 
 /*
-	prametersand global variables
+	prameters and global variables
 */
 
+#define MAXNUMTESTS (128)
+#define THRESHOLD (20)
+#define S2P (1/20.0f)
+
 int n0max = 2;
-int r0max = 3;
 
 #define MAXNUMTEMPLATES 8192
 int numtemplates = 0;
@@ -185,7 +188,7 @@ int cluster_detections(int a[], int rs[], int cs[], int ss[], int qs[], int n)
 
 int match_templates(int rs[], int cs[], int ss[], int qs[], int32_t* ptrs[], int maxndetections,
 					uint8_t pixels[], int nrows, int ncols, int ldim,
-					float scalefactor, float stridefactor, float minsize, float maxsize, int n0max, int r0max)
+					float scalefactor, float stridefactor, float minsize, float maxsize, int n0max)
 {
 	int s;
 	int ndetections;
@@ -378,7 +381,7 @@ void process_image(IplImage* img, int draw, int print)
 	MAXSIZE = 600;//150;
 
 	t = getticks();
-	ndetections = match_templates(rs, cs, ss, qs, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max, r0max);
+	ndetections = match_templates(rs, cs, ss, qs, ptrs, MAXNDETECTIONS, pixels, nrows, ncols, ldim, SCALEFACTOR, STRIDEFACTOR, MINSIZE, MAXSIZE, n0max);
 
 //#define USE_CLUSTERING
 #ifdef USE_CLUSTERING

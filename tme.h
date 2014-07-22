@@ -11,14 +11,6 @@
 
 #define _FIXED_POINT_SCALE_ 256
 
-#define THRESHOLD (20)
-#define MAXNUMTESTS (128)
-#define S2P (1/20.0f)
-
-/*
-	
-*/
-
 void compute_rcs_transformation(int* T, int r, int c, int s);
 
 /*
@@ -47,7 +39,7 @@ typedef struct _tnode
 
 } tnode;
 
-tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength);
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength);
 
 tnode* load_tree_from_file(FILE* file);
 int save_tree_to_file(tnode* root, FILE* file);

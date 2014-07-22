@@ -1,5 +1,8 @@
 #include "tme.h"
 
+// a temporary define ...
+#define THRESHOLD 25
+
 /*
 	
 */
@@ -686,7 +689,7 @@ tnode* grow_subtree(int depth, int32_t stack[], int stacksize, int maxnumtests, 
 	return root;
 }
 
-tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int perturbationstrength)
+tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss[], int ncolss[], int ldims[], int n, int32_t tcodepool[], int tcodepoolsize, int maxnumtestspernode, int perturbationstrength)
 {
 	int i;
 	int* inds;
@@ -703,12 +706,12 @@ tnode* grow_tree(int* Ts[], int32_t* templates[], uint8_t* pixelss[], int nrowss
 		inds[i] = i;
 
 	//
-	maxstacksize = n*MAXNUMTESTS;
+	maxstacksize = n*maxnumtestspernode;
 
 	stack = (int32_t*)malloc(maxstacksize*sizeof(int32_t));
 
 	//
-	root = grow_subtree(0, stack, 0, MAXNUMTESTS/4, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
+	root = grow_subtree(0, stack, 0, maxnumtestspernode, Ts, templates, pixelss, nrowss, ncolss, ldims, inds, n, tcodepool, tcodepoolsize, perturbationstrength);
 
 	//
 	free(stack);

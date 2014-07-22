@@ -6,6 +6,10 @@
 
 #include "tme.h"
 
+#define MAXNUMTESTS (128)
+#define THRESHOLD (20)
+#define S2P (1/20.0f)
+
 /*
 	portable time function
 */
@@ -233,7 +237,7 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 	perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );
 
 	t = getticks();
-	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, perturbationstrength);
+	root = grow_tree(Ts, ptemplates, pix, nrowss, ncolss, ldims, numsamples, tcodepool, tcodepoolsize, MAXNUMTESTS/4, perturbationstrength);
 	printf("%f [ms] elapsed for clustering\n", 1000.0f*(getticks()-t));
 }
 
