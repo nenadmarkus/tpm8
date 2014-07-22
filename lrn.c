@@ -373,6 +373,8 @@ int main(int argc, char* argv[])
 
 	n = load_samples(argv[1], pix, rs, cs, ss, nrowss, ncolss, ldims, MAXN);
 
+	printf("%d samples loaded from '%s'\n", n, argv[1]);
+
 	//
 	t = getticks();
 	learn_templates(pix, rs, cs, ss, nrowss, ncolss, ldims, n);
