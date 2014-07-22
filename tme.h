@@ -14,6 +14,8 @@
 void compute_rcs_transformation(int* T, int r, int c, int s);
 void compute_rcso_transformation(int* T, int r, int c, int s, float o);
 
+float get_area_orientation(int r, int c, uint8_t pixels[], int nrows, int ncols, int ldim, int ksize);
+
 /*
 	
 */

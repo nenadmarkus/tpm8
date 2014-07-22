@@ -240,7 +240,6 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 		{
 			//
 			inds[numinds] = i;
-			tags[numinds] = i;
 
 			//
 			for(j=0; j<tmptemplate[0]; ++j)
@@ -253,6 +252,9 @@ void learn_templates(uint8_t* pix[], int rs[], int cs[], int ss[], int nrowss[],
 			//
 			++numinds;
 		}
+
+		//
+		tags[i] = i;
 	}
 
 	perturbationstrength = (int)( 1.5f*S2P*ss[0]/2 );

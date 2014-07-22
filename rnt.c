@@ -21,8 +21,7 @@ int numtemplates = 0;
 int32_t templates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 int32_t smoothnesstemplates[MAXNUMTEMPLATES][MAXNUMTESTS+1];
 
-int numtemplateclusters = 0;
-int32_t clustertemplates[MAXNUMTEMPLATES][1+MAXNUMTESTS];
+tnode* root = 0;
 
 /*
 	portable time function
@@ -68,8 +67,6 @@ float getticks()
 /*
 	
 */
-
-tnode* root = 0;
 
 float get_overlap(int r1, int c1, int s1, int r2, int c2, int s2)
 {
