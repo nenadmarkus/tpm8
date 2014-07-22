@@ -24,8 +24,8 @@
 
 void compute_rcs_transformation(int* T, int r, int c, int s)
 {
-	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
-	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _FIXED_POINT_SCALE_*r;
+	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _FIXED_POINT_SCALE_*c;
 }
 
 /*
@@ -42,11 +42,11 @@ int bintest(int32_t tcode, int threshold, int* T, uint8_t* pixels, int nrows, in
 	p = (int8_t*)&tcode;
 
 	//
-	r1 = (T[0]*p[0] + T[1]*p[1] + T[2])/_SQR_FIXED_POINT_SCALE_;
-	c1 = (T[3]*p[0] + T[4]*p[1] + T[5])/_SQR_FIXED_POINT_SCALE_;
+	r1 = (T[0]*p[0] + T[1]*p[1] + _FIXED_POINT_SCALE_*T[2])/_SQR_FIXED_POINT_SCALE_;
+	c1 = (T[3]*p[0] + T[4]*p[1] + _FIXED_POINT_SCALE_*T[5])/_SQR_FIXED_POINT_SCALE_;
 
-	r2 = (T[0]*p[2] + T[1]*p[3] + T[2])/_SQR_FIXED_POINT_SCALE_;
-	c2 = (T[3]*p[2] + T[4]*p[3] + T[5])/_SQR_FIXED_POINT_SCALE_;
+	r2 = (T[0]*p[2] + T[1]*p[3] + _FIXED_POINT_SCALE_*T[2])/_SQR_FIXED_POINT_SCALE_;
+	c2 = (T[3]*p[2] + T[4]*p[3] + _FIXED_POINT_SCALE_*T[5])/_SQR_FIXED_POINT_SCALE_;
 
 	//
 #ifndef USE_RGB
@@ -169,8 +169,10 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	}
 
 	// compute the transformation matrix
-	///T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
-	///T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+	/*
+	T[0] = _FIXED_POINT_SCALE_*s; T[1] = 0; T[2] = _SQR_FIXED_POINT_SCALE_*r;
+	T[3] = 0; T[4] = _FIXED_POINT_SCALE_*s; T[5] = _SQR_FIXED_POINT_SCALE_*c;
+	*/
 
 	compute_rcs_transformation(T, r, c, s);
 
@@ -180,7 +182,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 
 	if(useorientation == 1)
 	{
-		p = (int)( s*s2p );
+		p = MAX((int)( s*s2p ), 1);
 		maxnumiters = 16*maxnumtests;
 
 		numiters = 0;
@@ -235,11 +237,12 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 				*/
 				int Tp[6];
 
-				///Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
-				///Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+				/*
+				Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
+				Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+				*/
 
-				Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r+mwcrand()%(p/2+1)-(p/2));
-				Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c+mwcrand()%(p/2+1)-(p/2));
+				compute_rcs_transformation(Tp, r+mwcrand()%(p/2+1)-(p/2), c+mwcrand()%(p/2+1)-(p/2), s);
 
 				if( 0==bintest(b, threshold, Tp, pixels, nrows, ncols, ldim) )
 					ok = 0;
@@ -261,7 +264,7 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 	}
 	else
 	{
-		p = (int)( s*s2p );
+		p = MAX((int)( s*s2p ), 1);
 		maxnumiters = 64*maxnumtests;
 
 		numiters = 0;
@@ -298,8 +301,12 @@ int learn_template(int32_t template[], int maxnumtests, int useorientation, floa
 			{
 				int Tp[6];
 
+				/*
 				Tp[0] = _FIXED_POINT_SCALE_*s; Tp[1] = 0; Tp[2] = _SQR_FIXED_POINT_SCALE_*(r-p+mwcrand()%(2*p));
 				Tp[3] = 0; Tp[4] = _FIXED_POINT_SCALE_*s; Tp[5] = _SQR_FIXED_POINT_SCALE_*(c-p+mwcrand()%(2*p));
+				*/
+
+				compute_rcs_transformation(Tp, r-p+mwcrand()%(2*p), c-p+mwcrand()%(2*p), s);
 
 				if( 1==bintest(b, threshold, Tp, pixels, nrows, ncols, ldim) )
 					ok = 0;
@@ -467,8 +474,13 @@ int learn_joint_features(int32_t stack[], int stacksize, int maxstacksize, int* 
 			{
 				int Tp[6];
 
+				/*
 				Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
 				Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _SQR_FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
+				*/
+
+				Tp[0] = T[0]; Tp[1] = T[1]; Tp[2] = T[2] + _FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
+				Tp[3] = T[3]; Tp[4] = T[4]; Tp[5] = T[5] + _FIXED_POINT_SCALE_*( mwcrand()%(perturbationstrength+1) - perturbationstrength );
 
 				if( 0==bintest(stack[newstacksize], THRESHOLD, Tp, pixelss[inds[k]], nrowss[inds[k]], ncolss[inds[k]], ldims[inds[k]]) )
 				{
