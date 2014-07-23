@@ -574,22 +574,6 @@ int partition_data(int32_t* templates[], int* Ts[], uint8_t* pixelss[], int nrow
 
 	while(!stop)
 	{
-		/*
-		///printf("%d %d\n", i, j);
-		if(i==757 && j==951)
-		{
-			printf("%d %d\n", templates[inds[i]][0], templates[inds[j]][0]);
-
-			printf("%f\n",
-			get_similarity
-			(
-				templates[inds[0]], Ts[inds[0]], pixelss[inds[0]], nrowss[inds[0]], ncolss[inds[0]], ldims[inds[0]],
-				templates[inds[i]], Ts[inds[i]], pixelss[inds[i]], nrowss[inds[i]], ncolss[inds[i]], ldims[inds[i]]
-			)
-			);
-		}
-		*/
-
 		//
 		while
 		(

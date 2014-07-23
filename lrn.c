@@ -362,7 +362,7 @@ int main(int argc, char* argv[])
 	float t;
 	int n, tdepth, i;
 
-	#define MAXN 4192
+	#define MAXN (2*4192)
 
 	static uint8_t* pix[MAXN];
 	static int rs[MAXN], cs[MAXN], ss[MAXN], nrowss[MAXN], ncolss[MAXN], ldims[MAXN];
